@@ -4,6 +4,7 @@ import Authentication.AuthenticationController;
 import Authentication.CSUser;
 import CognitiveServices.ComputerVisionController;
 import CognitiveServices.TextAnalyticsController;
+import Database.FireBaseDB;
 import edu.cmu.lti.lexical_db.ILexicalDatabase;
 import edu.cmu.lti.lexical_db.NictWordNet;
 import edu.cmu.lti.ws4j.impl.WuPalmer;
@@ -49,9 +50,12 @@ public class TestingClass {
         CSUser user;
         user = authController.getCurrentCSUser();
         System.out.println(authController.isLogin());
+
         authController.loginWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
         user = authController.getCurrentCSUser();
         System.out.println(authController.isLogin());
+        FireBaseDB.getInstance().getData("");
+
         authController.logout();
         user = authController.getCurrentCSUser();
         System.out.println(authController.isLogin());

@@ -44,6 +44,10 @@ public class AuthenticationController {
         return currentCSUser;
     }
 
+    public String getIdToken() {
+        return this.idToken;
+    }
+
     public boolean isLogin() {
         return currentCSUser != null && idToken != null;
     }
