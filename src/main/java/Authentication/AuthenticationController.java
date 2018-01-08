@@ -36,7 +36,7 @@ public class AuthenticationController {
             JsonObject user_info = response_getUser.getAsJsonArray("users").get(0).getAsJsonObject();
             this.currentCSUser = new CSUser(user_info.get("localId").getAsString(), user_info.get("email").getAsString(), user_info.get("passwordHash").getAsString(), user_info.get("validSince")
                     .getAsString(), user_info.get("lastLoginAt").getAsString(), user_info.get("createdAt").getAsString(), user_info.get("emailVerified").getAsBoolean(), user_info.get("passwordUpdatedAt").getAsDouble());
-            this.idToken = idToken;
+            updateIdToken(idToken);
         }
     }
 
@@ -49,7 +49,8 @@ public class AuthenticationController {
     }
 
     private void updateIdToken(String idToken) {
-        this.idToken = idToken;
+        if (this.idToken == null)
+            this.idToken = idToken;
     }
 
     public void logout() {
