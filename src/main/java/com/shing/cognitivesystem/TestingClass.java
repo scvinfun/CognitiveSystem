@@ -5,6 +5,7 @@ import Authentication.CSUser;
 import CognitiveServices.ComputerVisionController;
 import CognitiveServices.TextAnalyticsController;
 import Database.FireBaseDB;
+import com.google.gson.JsonObject;
 import edu.cmu.lti.lexical_db.ILexicalDatabase;
 import edu.cmu.lti.lexical_db.NictWordNet;
 import edu.cmu.lti.ws4j.impl.WuPalmer;
@@ -54,7 +55,12 @@ public class TestingClass {
         authController.loginWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
         user = authController.getCurrentCSUser();
         System.out.println(authController.isLogin());
-        FireBaseDB.getInstance().getData("");
+        FireBaseDB.getInstance().getData("fad");
+        JsonObject obj = new JsonObject();
+        obj.addProperty("test",1);
+        obj.addProperty("tse",true);
+        obj.addProperty("rr","test");
+        FireBaseDB.getInstance().writeData("path",obj);
 
         authController.logout();
         user = authController.getCurrentCSUser();
