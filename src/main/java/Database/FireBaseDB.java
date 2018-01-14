@@ -3,7 +3,6 @@ package Database;
 import Authentication.AuthenticationController;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -12,9 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -70,6 +67,31 @@ public class FireBaseDB {
                 String[] path_elements = path.split("/");
                 obj.addProperty(path_elements[path_elements.length - 1], response_str.substring(1, response_str.length() - 1));
             }
+
+            return obj;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public JsonObject getAuthKeyData() {
+        try {
+            URL url = new URL(BASE_URL + "AuthKey.json");
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
+            con.setRequestProperty("User-Agent", USER_AGENT);
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            JsonObject obj;
+            String response_str = response.toString();
+            JsonParser parser = new JsonParser();
+            obj = parser.parse(response_str).getAsJsonObject();
 
             return obj;
         } catch (Exception e) {

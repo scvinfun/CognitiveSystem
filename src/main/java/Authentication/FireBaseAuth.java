@@ -30,7 +30,7 @@ public class FireBaseAuth {
         return instance;
     }
 
-    public JsonObject authenticationCall(String operation, JsonObject body) throws Exception {
+    public JsonObject authenticationServiceCall(String operation, JsonObject body) throws Exception {
         HttpURLConnection urlRequest = null;
         JsonObject rootobj = null;
         try {

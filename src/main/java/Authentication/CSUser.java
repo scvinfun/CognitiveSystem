@@ -15,4 +15,36 @@ public class CSUser {
         this.emailVerified = emailVerified;
         this.passwordUpdatedAt = passwordUpdatedAt;
     }
+
+    public String getLocalId() {
+        return localId;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public String getValidSince() {
+        return validSince;
+    }
+
+    public String getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public double getPasswordUpdatedAt() {
+        return passwordUpdatedAt;
+    }
 }

@@ -14,22 +14,36 @@ public class AuthenticationController {
         return instance;
     }
 
+    public void registerAccountWithEmailPassword(String email, String password) throws Exception {
+        JsonObject response_register = null;
+        JsonObject request_register = new JsonObject();
+        request_register.addProperty("email", email);
+        request_register.addProperty("password", Encryptor.getInstance().encrypt(password));
+        request_register.addProperty("returnSecureToken", true);
+        FireBaseAuth auth = FireBaseAuth.getInstance();
+        response_register = auth.authenticationServiceCall(auth.OPERATION_SIGNUP, request_register);
+
+        if (response_register != null) {
+            loginWithEmailPassword(email, password);
+        }
+    }
+
     public void loginWithEmailPassword(String email, String password) throws Exception {
         JsonObject response_login = null;
         JsonObject response_getUser = null;
 
         JsonObject request_login = new JsonObject();
         request_login.addProperty("email", email);
-        request_login.addProperty("password", password);
+        request_login.addProperty("password", Encryptor.getInstance().encrypt(password));
         request_login.addProperty("returnSecureToken", true);
         FireBaseAuth auth = FireBaseAuth.getInstance();
-        response_login = auth.authenticationCall(auth.OPERATION_SIGNIN, request_login);
+        response_login = auth.authenticationServiceCall(auth.OPERATION_SIGNIN, request_login);
 
         String idToken = response_login.get("idToken").getAsString();
         if (response_login != null) {
             JsonObject request_getUser = new JsonObject();
             request_getUser.addProperty("idToken", idToken);
-            response_getUser = auth.authenticationCall(auth.OPERATION_GETUSER, request_getUser);
+            response_getUser = auth.authenticationServiceCall(auth.OPERATION_GETUSER, request_getUser);
         }
 
         if (response_getUser != null) {

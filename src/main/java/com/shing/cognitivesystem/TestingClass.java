@@ -2,9 +2,11 @@ package com.shing.cognitivesystem;
 
 import Authentication.AuthenticationController;
 import Authentication.CSUser;
+import Authentication.Encryptor;
 import CognitiveServices.ComputerVisionController;
 import CognitiveServices.TextAnalyticsController;
 import Database.FireBaseDB;
+import Logging.LoggingController;
 import com.google.gson.JsonObject;
 import edu.cmu.lti.lexical_db.ILexicalDatabase;
 import edu.cmu.lti.lexical_db.NictWordNet;
@@ -12,6 +14,7 @@ import edu.cmu.lti.ws4j.impl.WuPalmer;
 import edu.cmu.lti.ws4j.util.WS4JConfiguration;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 
 @RestController
 public class TestingClass {
@@ -55,15 +58,36 @@ public class TestingClass {
         authController.loginWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
         user = authController.getCurrentCSUser();
         System.out.println(authController.isLogin());
-        FireBaseDB.getInstance().getData("fad");
-        JsonObject obj = new JsonObject();
-        obj.addProperty("test",1);
-        obj.addProperty("tse",true);
-        obj.addProperty("rr","test");
-        FireBaseDB.getInstance().writeData("path",obj);
+        LoggingController.getInstance().logging("Test","Test");
 
         authController.logout();
         user = authController.getCurrentCSUser();
         System.out.println(authController.isLogin());
+    }
+
+    @RequestMapping("/db")
+    public void test6() throws Exception {
+        AuthenticationController.getInstance().loginWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
+        System.out.println(FireBaseDB.getInstance().getData("fad"));
+        JsonObject obj = new JsonObject();
+        obj.addProperty("test", 1);
+        obj.addProperty("tse", true);
+        obj.addProperty("rr", "test");
+        FireBaseDB.getInstance().writeData("path", obj);
+    }
+
+    @RequestMapping("/auth_register")
+    public void test4() throws Exception {
+        AuthenticationController authController = AuthenticationController.getInstance();
+        System.out.println(authController.isLogin());
+        authController.registerAccountWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
+        System.out.println(authController.isLogin());
+    }
+
+    @RequestMapping("/en")
+    public void test5() {
+        Encryptor encryptor = Encryptor.getInstance();
+        String s = encryptor.encrypt("vinfun2004");
+        System.out.println("E:" + s + " D:" + encryptor.decrypt(s));
     }
 }
