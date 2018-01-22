@@ -3,6 +3,7 @@ package com.shing.cognitivesystem;
 import Authentication.AuthenticationController;
 import Authentication.CSUser;
 import Authentication.Encryptor;
+import Authentication.UserSyncController;
 import CognitiveServices.ComputerVisionController;
 import CognitiveServices.TextAnalyticsController;
 import Database.FireBaseDB;
@@ -53,16 +54,16 @@ public class TestingClass {
         AuthenticationController authController = AuthenticationController.getInstance();
         CSUser user;
         user = authController.getCurrentCSUser();
-        System.out.println(authController.isLogin());
+        System.out.println("Before Login: " + authController.isLogin());
 
         authController.loginWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
         user = authController.getCurrentCSUser();
-        System.out.println(authController.isLogin());
-        LoggingController.getInstance().logging("Test","Test");
+        System.out.println("After Login: " + authController.isLogin());
+        LoggingController.getInstance().logging("Test", "Test");
 
         authController.logout();
         user = authController.getCurrentCSUser();
-        System.out.println(authController.isLogin());
+        System.out.println("After Logout: " + authController.isLogin());
     }
 
     @RequestMapping("/db")
@@ -89,5 +90,20 @@ public class TestingClass {
         Encryptor encryptor = Encryptor.getInstance();
         String s = encryptor.encrypt("vinfun2004");
         System.out.println("E:" + s + " D:" + encryptor.decrypt(s));
+    }
+
+    @RequestMapping("/sync")
+    public void test7() throws Exception {
+        AuthenticationController.getInstance().loginWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
+        UserSyncController usc = UserSyncController.getInstance();
+        usc.syncData();
+    }
+
+    @RequestMapping("/patch")
+    public void test8() {
+        AuthenticationController.getInstance().loginWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
+        JsonObject r = new JsonObject();
+        r.addProperty("rr", "fdfa");
+        FireBaseDB.getInstance().modifyData("path/-L2j1JIjs0s4XxoxkZSI", r);
     }
 }

@@ -1,15 +1,15 @@
 package Authentication;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 public class FireBaseAuth {
     private static final String BASE_URL = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/";
@@ -30,7 +30,7 @@ public class FireBaseAuth {
         return instance;
     }
 
-    public JsonObject authenticationServiceCall(String operation, JsonObject body) throws Exception {
+    public JsonObject authenticationServiceCall(String operation, JsonObject body) {
         HttpURLConnection urlRequest = null;
         JsonObject rootobj = null;
         try {

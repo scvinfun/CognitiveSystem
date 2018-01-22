@@ -28,7 +28,7 @@ public class AuthenticationController {
         }
     }
 
-    public void loginWithEmailPassword(String email, String password) throws Exception {
+    public void loginWithEmailPassword(String email, String password) {
         JsonObject response_login = null;
         JsonObject response_getUser = null;
 

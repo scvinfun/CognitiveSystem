@@ -4,6 +4,7 @@ import Authentication.AuthenticationController;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -107,6 +108,29 @@ public class FireBaseDB {
         HttpClient httpClient = HttpClientBuilder.create().build();
         try {
             HttpPost request = new HttpPost(BASE_URL + path + ".json?auth=" + authController.getIdToken());
+            StringEntity params = new StringEntity(data.toString());
+            request.addHeader("content-type", "application/x-www-form-urlencoded");
+            request.setEntity(params);
+            httpClient.execute(request);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public void modifyData(String path, JsonObject data) {
+        AuthenticationController authController = AuthenticationController.getInstance();
+        if (!authController.isLogin())
+            return;
+
+        // checking whether the data exist or not
+        JsonObject currentData = getData(path);
+        if (currentData == null)
+            return;
+
+        // update data
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        try {
+            HttpPatch request = new HttpPatch(BASE_URL + path + ".json");
             StringEntity params = new StringEntity(data.toString());
             request.addHeader("content-type", "application/x-www-form-urlencoded");
             request.setEntity(params);

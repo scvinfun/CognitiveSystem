@@ -117,12 +117,11 @@ public class TextAnalyticsController {
             String languages_response = serviceCall(documents, StaticData.TEXTANALYTICS_TYPE_LANGUAGES);
 
             // remove the sentences which are not written in english
-            // TODO: compare all the language results and select the high-mark one as a final result
             ArrayList<String> wrongList = new ArrayList<>();
             JsonArray json_array = new JsonParser().parse(languages_response).getAsJsonObject().getAsJsonArray("documents");
             for (JsonElement element : json_array) {
                 JsonObject obj = element.getAsJsonObject();
-                String language = obj.getAsJsonArray("detectedLanguages").get(0).getAsJsonObject().get("iso6391Name").getAsString();
+                String language = getLanguageBaseOnScore(obj.getAsJsonArray("detectedLanguages"));
                 if (!language.equals("en"))
                     wrongList.add(obj.get("id").getAsString());
             }
@@ -143,5 +142,17 @@ public class TextAnalyticsController {
         } catch (Exception e) {
             return e.getMessage();
         }
+    }
+
+    private String getLanguageBaseOnScore(JsonArray jsonArray) {
+        String language = "unknown";
+        double score = 0;
+        for (JsonElement element : jsonArray) {
+            JsonObject obj = element.getAsJsonObject();
+            if (obj.get("score").getAsDouble() > score)
+                language = obj.get("iso6391Name").getAsString();
+        }
+
+        return language;
     }
 }
