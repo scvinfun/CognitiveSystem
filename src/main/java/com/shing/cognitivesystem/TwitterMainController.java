@@ -1,7 +1,7 @@
 package com.shing.cognitivesystem;
 
-import javax.inject.Inject;
-
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import org.springframework.social.connect.ConnectionRepository;
 import org.springframework.social.twitter.api.CursoredList;
 import org.springframework.social.twitter.api.Tweet;
@@ -12,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -23,8 +24,8 @@ import java.util.regex.Pattern;
 
 import static org.apache.http.HttpHeaders.USER_AGENT;
 
-//@Controller
-//@RequestMapping("/")
+@Controller
+@RequestMapping("/")
 public class TwitterController {
     private Twitter twitter;
 
@@ -46,23 +47,32 @@ public class TwitterController {
         CursoredList<TwitterProfile> friends = twitter.friendOperations().getFriends();
         model.addAttribute("friends", friends);
         List<Tweet> list = twitter.timelineOperations().getUserTimeline();
-        getPhotoUrlList(list);
+        ArrayList<JsonObject> tweets = new ArrayList<>();
+        for (Tweet t : list) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("createAt", t.getCreatedAt().toString());
+            if (getPostUrlFromString(t.getText()) == null) {
+                obj.addProperty("text", t.getText());
+            } else {
+                obj.addProperty("text", t.getText().replace(getPostUrlFromString(t.getText()), ""));
+                obj.add("photos", getPhotoUrlList(t));
+            }
+            tweets.add(obj);
+        }
 
         return "hello2";
     }
 
-    private ArrayList<String> getPhotoUrlList(List<Tweet> tweetList) {
-        ArrayList<String> photoURLs = new ArrayList<>();
-        for (Tweet tweet : tweetList) {
-            String postUrl = getPostUrlFromString(tweet.getText());
-            if (postUrl == null)
-                continue;
-            List<String> photoUrl_list = getPhotoUrlsFromPostsUrl(postUrl);
-            if (photoUrl_list == null)
-                continue;
-            for (String photoUrl : photoUrl_list) {
-                photoURLs.add(photoUrl);
-            }
+    private JsonArray getPhotoUrlList(Tweet tweet) {
+        JsonArray photoURLs = new JsonArray();
+        String postUrl = getPostUrlFromString(tweet.getText());
+        if (postUrl == null)
+            return null;
+        List<String> photoUrl_list = getPhotoUrlsFromPostsUrl(postUrl);
+        if (photoUrl_list == null)
+            return null;
+        for (String photoUrl : photoUrl_list) {
+            photoURLs.add(photoUrl);
         }
 
         return photoURLs;
