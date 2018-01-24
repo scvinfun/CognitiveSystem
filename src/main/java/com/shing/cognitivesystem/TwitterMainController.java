@@ -1,5 +1,7 @@
 package com.shing.cognitivesystem;
 
+import Authentication.AuthenticationController;
+import Authentication.UserSyncController;
 import InformationExtractor.TwitterController;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -50,7 +52,8 @@ public class TwitterMainController {
         List<Tweet> list = twitter.timelineOperations().getUserTimeline();
         ArrayList<JsonObject> tweets = TwitterController.getInstance().getTweetDetail(list);
 
-
+        AuthenticationController.getInstance().loginWithEmailPassword("scvinfun@gmail.com","vinfun2004");
+        UserSyncController.getInstance().syncData_twitter(tweets);
 
         return "hello2";
     }

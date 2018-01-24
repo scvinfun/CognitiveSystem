@@ -93,10 +93,9 @@ public class TestingClass {
     }
 
     @RequestMapping("/sync")
-    public void test7() throws Exception {
+    public void test7() {
         AuthenticationController.getInstance().loginWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
         UserSyncController usc = UserSyncController.getInstance();
-        usc.syncData();
     }
 
     @RequestMapping("/patch")

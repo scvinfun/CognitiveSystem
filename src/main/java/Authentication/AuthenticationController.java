@@ -14,7 +14,7 @@ public class AuthenticationController {
         return instance;
     }
 
-    public void registerAccountWithEmailPassword(String email, String password) throws Exception {
+    public void registerAccountWithEmailPassword(String email, String password) {
         JsonObject response_register = null;
         JsonObject request_register = new JsonObject();
         request_register.addProperty("email", email);
