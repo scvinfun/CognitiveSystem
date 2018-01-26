@@ -1,6 +1,7 @@
 package Logging;
 
 import Authentication.AuthenticationController;
+import Authentication.CSUser;
 import Database.FireBaseDB;
 import com.google.gson.JsonObject;
 
@@ -23,8 +24,9 @@ public class LoggingController {
         }
 
         JsonObject obj = new JsonObject();
-        obj.addProperty("uid", auth.getCurrentCSUser().getLocalId());
-        obj.addProperty("email", auth.getCurrentCSUser().getEmail());
+        CSUser currentUser = auth.getCurrentCSUser();
+        obj.addProperty("uid", currentUser.getLocalId());
+        obj.addProperty("email", currentUser.getEmail());
         obj.addProperty("category", category);
         obj.addProperty("description", description);
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());

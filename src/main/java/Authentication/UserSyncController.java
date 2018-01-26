@@ -66,7 +66,6 @@ public class UserSyncController {
         FireBaseDB.getInstance().modifyData(syncPath, obj);
     }
 
-    // TODO:try may not a good choice,somehow userSyncData still have data(!=null)
     private boolean isCurrentSyncDataExisted(JsonObject userSyncData) {
         boolean isExisted = false;
 
