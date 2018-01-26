@@ -27,8 +27,8 @@ import java.util.regex.Pattern;
 
 import static org.apache.http.HttpHeaders.USER_AGENT;
 
-//@Controller
-//@RequestMapping("/")
+@Controller
+@RequestMapping("/tw_login")
 public class TwitterMainController {
     private Twitter twitter;
 

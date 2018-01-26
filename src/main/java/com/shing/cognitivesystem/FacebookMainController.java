@@ -1,5 +1,7 @@
 package com.shing.cognitivesystem;
 
+import Authentication.AuthenticationController;
+import Authentication.UserSyncController;
 import InformationExtractor.FacebookController;
 import com.google.gson.JsonObject;
 import org.springframework.social.connect.ConnectionRepository;
@@ -36,6 +38,8 @@ public class FacebookMainController {
         model.addAttribute("email", user.getFirstName());
         PagedList<Post> feed = facebook.feedOperations().getFeed();
         ArrayList<JsonObject> j = FacebookController.getInstance().getFacebookDetail(feed);
+        AuthenticationController.getInstance().loginWithEmailPassword("scvinfun@gmail.com","vinfun2004");
+        UserSyncController.getInstance().syncData_facebook(j);
         model.addAttribute("feed", feed);
 
         return "hello";
