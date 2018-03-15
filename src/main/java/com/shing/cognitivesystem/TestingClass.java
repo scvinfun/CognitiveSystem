@@ -1,21 +1,27 @@
 package com.shing.cognitivesystem;
 
 import Authentication.AuthenticationController;
-import Authentication.CSUser;
 import Authentication.Encryptor;
 import Authentication.UserSyncController;
 import CognitiveServices.ComputerVisionController;
 import CognitiveServices.TextAnalyticsController;
 import Database.FireBaseDB;
-import Logging.LoggingController;
 import com.google.gson.JsonObject;
 import edu.cmu.lti.lexical_db.ILexicalDatabase;
 import edu.cmu.lti.lexical_db.NictWordNet;
 import edu.cmu.lti.ws4j.impl.WuPalmer;
 import edu.cmu.lti.ws4j.util.WS4JConfiguration;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static org.apache.http.HttpHeaders.USER_AGENT;
 
 @RestController
 public class TestingClass {
@@ -38,32 +44,69 @@ public class TestingClass {
     }
 
     @RequestMapping("/sr")
-    public void test2() {
-        String[] words = {"add", "get", "filter", "remove", "check", "find", "collect", "create", "dog", "cat"};
-
+    public String test2() {
+        String[] words = {"uneasy", "anxious", "worried"};
+        String result = "";
         for (int i = 0; i < words.length - 1; i++) {
             for (int j = i + 1; j < words.length; j++) {
                 double distance = compute(words[i], words[j]);
                 System.out.println(words[i] + " -  " + words[j] + " = " + distance);
+                result += result + words[i] + " -  " + words[j] + " = " + distance + "\n";
             }
         }
+
+        return result;
     }
 
-    @RequestMapping("/auth")
-    public void test3() throws Exception {
-        AuthenticationController authController = AuthenticationController.getInstance();
-        CSUser user;
-        user = authController.getCurrentCSUser();
-        System.out.println("Before Login: " + authController.isLogin());
+    @RequestMapping("/sr_2")
+    public String test2_2() {
+        String[] words = {"tired", "exhausted", "fatigued", "headache", "migraine", "insomnia", "wakefulness", "dog", "cat"};
+        String result = "";
 
-        authController.loginWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
-        user = authController.getCurrentCSUser();
-        System.out.println("After Login: " + authController.isLogin());
-        LoggingController.getInstance().logging("Test", "Test");
+        for (int i = 0; i < words.length - 1; i++) {
+            for (int j = i + 1; j < words.length; j++) {
+                try {
+                    URL url = new URL("http://maraca.d.umn.edu/cgi-bin/similarity/similarity.cgi?word1=" + words[i] + "&senses1=all&word2=" + words[j] + "&senses2=all&measure=wup&rootnode=yes");
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    con.setRequestMethod("GET");
+                    con.setRequestProperty("User-Agent", USER_AGENT);
+                    BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String inputLine;
+                    StringBuffer response = new StringBuffer();
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                    in.close();
+                    String extraction = extractContentInsideTag("p class=\"results\"", response.toString());
+                    if (extraction == null)
+                        extraction = "The relatedness of " + words[i] + " and " + words[j] + " using wup is 0.";
+                    result += "<p>" + extraction + "</p>";
+                } catch (Exception e) {
 
-        authController.logout();
-        user = authController.getCurrentCSUser();
-        System.out.println("After Logout: " + authController.isLogin());
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private String extractContentInsideTag(String tag, String source) {
+        Pattern TAG_REGEX = Pattern.compile("<" + tag + ">(.+?)</p>");
+        final Matcher matcher = TAG_REGEX.matcher(source);
+        while (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
+    private ArrayList<String> extractContentInsideTag2(String source) {
+        ArrayList<String> result = new ArrayList<>();
+        Pattern TAG_REGEX = Pattern.compile("<(.+?)>");
+        final Matcher matcher = TAG_REGEX.matcher(source);
+        while (matcher.find()) {
+            result.add(matcher.group(1));
+        }
+        return result;
     }
 
     @RequestMapping("/db")
@@ -75,14 +118,6 @@ public class TestingClass {
         obj.addProperty("tse", true);
         obj.addProperty("rr", "test");
         FireBaseDB.getInstance().writeData("path", obj);
-    }
-
-    @RequestMapping("/auth_register")
-    public void test4() throws Exception {
-        AuthenticationController authController = AuthenticationController.getInstance();
-        System.out.println(authController.isLogin());
-        authController.registerAccountWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
-        System.out.println(authController.isLogin());
     }
 
     @RequestMapping("/en")
@@ -104,5 +139,47 @@ public class TestingClass {
         JsonObject r = new JsonObject();
         r.addProperty("rr", "fdfa");
         FireBaseDB.getInstance().modifyData("path/-L2j1JIjs0s4XxoxkZSI", r);
+    }
+
+    /* Production Functions */
+    @PostMapping("SignUp")
+    public String SignUp(@RequestParam("email") String email, @RequestParam("pwd") String pwd) {
+        AuthenticationController authController = AuthenticationController.getInstance();
+        boolean successSignUp = authController.registerAccountWithEmailPassword(email, pwd);
+        JsonObject obj = new JsonObject();
+        obj.addProperty("successSignUp", successSignUp);
+
+        return obj.toString();
+    }
+
+    @PostMapping("Login")
+    public String Login(@RequestParam("email") String email, @RequestParam("pwd") String pwd) {
+        AuthenticationController authController = AuthenticationController.getInstance();
+        boolean successLogin = authController.loginWithEmailPassword(email, pwd);
+
+        JsonObject obj = new JsonObject();
+        obj.addProperty("successLogin", successLogin);
+
+        return obj.toString();
+    }
+
+    @PostMapping("Logout")
+    public void Logout() {
+        AuthenticationController.getInstance().logout();
+    }
+
+    @GetMapping("IsLogin")
+    public boolean IsLogin() {
+        AuthenticationController authController = AuthenticationController.getInstance();
+        return authController.isLogin();
+    }
+
+    @GetMapping("GetUserInfo")
+    public String GetUserInfo() {
+        JsonObject obj = new JsonObject();
+        AuthenticationController authController = AuthenticationController.getInstance();
+        obj.addProperty("email", authController.getCurrentCSUser().getEmail());
+
+        return obj.toString();
     }
 }

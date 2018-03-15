@@ -30,7 +30,7 @@ public class LoggingController {
         obj.addProperty("category", category);
         obj.addProperty("description", description);
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        obj.addProperty("createAt", timestamp.toString());
+        obj.addProperty("createdAt", timestamp.toString());
         FireBaseDB.getInstance().writeData("Log", obj);
     }
 }

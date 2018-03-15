@@ -14,7 +14,7 @@ public class AuthenticationController {
         return instance;
     }
 
-    public void registerAccountWithEmailPassword(String email, String password) {
+    public boolean registerAccountWithEmailPassword(String email, String password) {
         JsonObject response_register = null;
         JsonObject request_register = new JsonObject();
         request_register.addProperty("email", email);
@@ -25,12 +25,16 @@ public class AuthenticationController {
 
         if (response_register != null) {
             loginWithEmailPassword(email, password);
+            return true;
+        } else {
+            return false;
         }
     }
 
-    public void loginWithEmailPassword(String email, String password) {
+    public boolean loginWithEmailPassword(String email, String password) {
         JsonObject response_login = null;
         JsonObject response_getUser = null;
+        String idToken = null;
 
         JsonObject request_login = new JsonObject();
         request_login.addProperty("email", email);
@@ -39,8 +43,8 @@ public class AuthenticationController {
         FireBaseAuth auth = FireBaseAuth.getInstance();
         response_login = auth.authenticationServiceCall(auth.OPERATION_SIGNIN, request_login);
 
-        String idToken = response_login.get("idToken").getAsString();
         if (response_login != null) {
+            idToken = response_login.get("idToken").getAsString();
             JsonObject request_getUser = new JsonObject();
             request_getUser.addProperty("idToken", idToken);
             response_getUser = auth.authenticationServiceCall(auth.OPERATION_GETUSER, request_getUser);
@@ -51,7 +55,11 @@ public class AuthenticationController {
             this.currentCSUser = new CSUser(user_info.get("localId").getAsString(), user_info.get("email").getAsString(), user_info.get("passwordHash").getAsString(), user_info.get("validSince")
                     .getAsString(), user_info.get("lastLoginAt").getAsString(), user_info.get("createdAt").getAsString(), user_info.get("emailVerified").getAsBoolean(), user_info.get("passwordUpdatedAt").getAsDouble());
             updateIdToken(idToken);
+
+            return true;
         }
+
+        return false;
     }
 
     public CSUser getCurrentCSUser() {

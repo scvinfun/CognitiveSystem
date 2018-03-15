@@ -8,13 +8,16 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+// TODO CST/HKT
+
 public class UserSyncController {
+    public enum POST_TYPE {
+        TWITTER,
+        FACEBOOK
+    }
 
     private static UserSyncController instance = null;
     private String syncPath = null;
-    //TODO:TYPE + Test sync twitter then sync facebook
-    private final String POSTTYPE_TWITTER = "TWITTER";
-    private final String POSTTYPE_FACEBOOK = "FACEBOOK";
 
     public static UserSyncController getInstance() {
         if (instance == null) {
@@ -24,7 +27,7 @@ public class UserSyncController {
     }
 
     private UserSyncController() {
-        syncPath = "UserSync";
+        syncPath = "UserSyncData";
     }
 
     public void syncData_twitter(ArrayList<JsonObject> tweets) {
@@ -47,7 +50,7 @@ public class UserSyncController {
 
         JsonObject obj = new JsonObject();
         obj.addProperty("uid", ac.getCurrentCSUser().getLocalId());
-        obj.addProperty("twitter", getLatestDateTime(POSTTYPE_TWITTER, tweets));
+        obj.addProperty("twitterSyncTime", getLatestDateTime(POST_TYPE.TWITTER, tweets));
         FireBaseDB.getInstance().writeData(syncPath, obj);
     }
 
@@ -56,8 +59,8 @@ public class UserSyncController {
             return;
 
         JsonObject obj = new JsonObject();
-        obj.addProperty("twitter", getLatestDateTime(POSTTYPE_TWITTER, tweets, independentUserSyncData));
-        FireBaseDB.getInstance().modifyData(syncPath + "/" + independentUserSyncData.get("path").getAsString(), obj);
+        obj.addProperty("twitterSyncTime", getLatestDateTime(POST_TYPE.TWITTER, tweets, independentUserSyncData));
+        FireBaseDB.getInstance().modifyData(syncPath + "/" + independentUserSyncData.get("key").getAsString(), obj);
     }
 
     public void syncData_facebook(ArrayList<JsonObject> posts) {
@@ -80,7 +83,7 @@ public class UserSyncController {
 
         JsonObject obj = new JsonObject();
         obj.addProperty("uid", ac.getCurrentCSUser().getLocalId());
-        obj.addProperty("facebook", getLatestDateTime(POSTTYPE_FACEBOOK, posts));
+        obj.addProperty("facebookSyncTime", getLatestDateTime(POST_TYPE.FACEBOOK, posts));
         FireBaseDB.getInstance().writeData(syncPath, obj);
     }
 
@@ -89,8 +92,8 @@ public class UserSyncController {
             return;
 
         JsonObject obj = new JsonObject();
-        obj.addProperty("facebook", getLatestDateTime(POSTTYPE_FACEBOOK, posts, independentUserSyncData));
-        FireBaseDB.getInstance().modifyData(syncPath + "/" + independentUserSyncData.get("path").getAsString(), obj);
+        obj.addProperty("facebookSyncTime", getLatestDateTime(POST_TYPE.FACEBOOK, posts, independentUserSyncData));
+        FireBaseDB.getInstance().modifyData(syncPath + "/" + independentUserSyncData.get("key").getAsString(), obj);
     }
 
     private boolean isCurrentSyncDataExisted(JsonObject userSyncData) {
@@ -112,20 +115,20 @@ public class UserSyncController {
         return isExisted;
     }
 
-    private String getLatestDateTime(String postType, ArrayList<JsonObject> tweets) {
+    private String getLatestDateTime(POST_TYPE postType, ArrayList<JsonObject> tweets) {
         return getLatestDateTime(postType, tweets, null);
     }
 
-    private String getLatestDateTime(String postType, ArrayList<JsonObject> posts, JsonObject independentUserSyncData) {
+    private String getLatestDateTime(POST_TYPE postType, ArrayList<JsonObject> posts, JsonObject independentUserSyncData) {
         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
         Date latestDateTime = null;
 
         try {
             if (independentUserSyncData != null)
-                if (postType.equals(POSTTYPE_TWITTER) && independentUserSyncData.has("twitter"))
-                    latestDateTime = sdf.parse(independentUserSyncData.get("twitter").getAsString());
-                else if (postType.equals(POSTTYPE_FACEBOOK) && independentUserSyncData.has("facebook"))
-                    latestDateTime = sdf.parse(independentUserSyncData.get("facebook").getAsString());
+                if (postType == POST_TYPE.TWITTER && independentUserSyncData.has("twitter"))
+                    latestDateTime = sdf.parse(independentUserSyncData.get("twitterSyncTime").getAsString());
+                else if (postType == POST_TYPE.FACEBOOK && independentUserSyncData.has("facebook"))
+                    latestDateTime = sdf.parse(independentUserSyncData.get("facebookSyncTime").getAsString());
 
             for (JsonObject t : posts) {
                 Date dateTime = sdf.parse(t.get("createAt").getAsString());
@@ -144,7 +147,7 @@ public class UserSyncController {
         for (Map.Entry<String, JsonElement> entry : entrySet) {
             JsonObject obj = entry.getValue().getAsJsonObject();
             if (obj.get("uid").getAsString().equals(AuthenticationController.getInstance().getCurrentCSUser().getLocalId())) {
-                obj.addProperty("path", entry.getKey());
+                obj.addProperty("key", entry.getKey());
                 return obj;
             }
         }
