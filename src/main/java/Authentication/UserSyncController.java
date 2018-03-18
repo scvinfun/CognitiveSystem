@@ -154,4 +154,18 @@ public class UserSyncController {
 
         return null;
     }
+
+    public JsonObject getUserSyncData() {
+        JsonObject result = new JsonObject();
+
+        JsonObject userSyncData = FireBaseDB.getInstance().getData(syncPath);
+        if (userSyncData == null || !isCurrentSyncDataExisted(userSyncData)) {
+            result.addProperty("syncDataIsExisted", false);
+        } else {
+            result = extractIndependentUserSyncData(userSyncData);
+            result.addProperty("syncDataIsExisted", true);
+        }
+
+        return result;
+    }
 }

@@ -52,7 +52,6 @@ public class TwitterMainController {
         List<Tweet> list = twitter.timelineOperations().getUserTimeline();
         ArrayList<JsonObject> tweets = TwitterController.getInstance().getTweetDetail(list);
 
-        AuthenticationController.getInstance().loginWithEmailPassword("scvinfun@gmail.com","vinfun2004");
         UserSyncController.getInstance().syncData_twitter(tweets);
 
         return "hello2";

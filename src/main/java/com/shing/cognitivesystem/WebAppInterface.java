@@ -6,6 +6,8 @@ import Authentication.UserSyncController;
 import CognitiveServices.ComputerVisionController;
 import CognitiveServices.TextAnalyticsController;
 import Database.FireBaseDB;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import edu.cmu.lti.lexical_db.ILexicalDatabase;
 import edu.cmu.lti.lexical_db.NictWordNet;
@@ -18,13 +20,16 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.apache.http.HttpHeaders.USER_AGENT;
 
 @RestController
-public class TestingClass {
+public class WebAppInterface {
     @RequestMapping("/ta")
     public String test_ta() {
         return TextAnalyticsController.getInstance().TextAnalyticsService("这是一个用中文写的文件", "Este ha sido un dia terrible, llegué tarde al trabajo debido a un accidente automobilistico.", "I really enjoy the new XBox One S. It has a clean look, it has 4K/HDR resolution and it is affordable.", "The Grand Hotel is a new hotel in the center of Seattle. It earned 5 stars in my review, and has the classiest decor I've ever seen.");
@@ -176,10 +181,38 @@ public class TestingClass {
 
     @GetMapping("GetUserInfo")
     public String GetUserInfo() {
-        JsonObject obj = new JsonObject();
         AuthenticationController authController = AuthenticationController.getInstance();
+        if (!authController.isLogin())
+            return null;
+
+        JsonObject obj = new JsonObject();
         obj.addProperty("email", authController.getCurrentCSUser().getEmail());
+        obj.add("userSyncData",UserSyncController.getInstance().getUserSyncData());
 
         return obj.toString();
+    }
+
+    @GetMapping("GetDisorders")
+    public String GetDisorders() {
+        AuthenticationController authController = AuthenticationController.getInstance();
+        if (!authController.isLogin())
+            return null;
+
+        return FireBaseDB.getInstance().getData("MentalDisorder").toString();
+    }
+
+    @PostMapping("GetSymptom")
+    public String GetSymptom(@RequestParam("disorder") String disorder) {
+        ArrayList<JsonObject> response = new ArrayList<>();
+        Set<Map.Entry<String, JsonElement>> entrySet = FireBaseDB.getInstance().getData("DiagnosticRule").entrySet();
+        for (Map.Entry<String, JsonElement> entry : entrySet) {
+            JsonObject obj = entry.getValue().getAsJsonObject();
+            if (obj.get("disorder").getAsString().equals(disorder)) {
+                JsonObject foundObj = new JsonObject();
+                foundObj.add(entry.getKey(), obj);
+                response.add(foundObj);
+            }
+        }
+        return new Gson().toJson(response);
     }
 }
