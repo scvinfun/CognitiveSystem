@@ -30,70 +30,98 @@ public class UserSyncController {
         syncPath = "UserSyncData";
     }
 
-    public void syncData_twitter(ArrayList<JsonObject> tweets) {
-        if (!AuthenticationController.getInstance().isLogin())
-            return;
-
+    public boolean syncData_twitter(long twitterId, ArrayList<JsonObject> tweets) {
         JsonObject userSyncData = FireBaseDB.getInstance().getData(syncPath);
         if (userSyncData == null || !isCurrentSyncDataExisted(userSyncData)) {
-            initSyncData_twitter(tweets);
+            initSyncData_twitter(twitterId, tweets);
+            return true;
         } else {
             JsonObject independentUserSyncData = extractIndependentUserSyncData(userSyncData);
-            modifySyncData_twitter(tweets, independentUserSyncData);
+            if (isSameTwitterAccount(twitterId, independentUserSyncData)) {
+                modifySyncData_twitter(twitterId, tweets, independentUserSyncData);
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 
-    private void initSyncData_twitter(ArrayList<JsonObject> tweets) {
+    private void initSyncData_twitter(long twitterId, ArrayList<JsonObject> tweets) {
         AuthenticationController ac = AuthenticationController.getInstance();
         if (!ac.isLogin())
             return;
 
         JsonObject obj = new JsonObject();
         obj.addProperty("uid", ac.getCurrentCSUser().getLocalId());
+        obj.addProperty("twitterId", twitterId);
         obj.addProperty("twitterSyncTime", getLatestDateTime(POST_TYPE.TWITTER, tweets));
         FireBaseDB.getInstance().writeData(syncPath, obj);
     }
 
-    private void modifySyncData_twitter(ArrayList<JsonObject> tweets, JsonObject independentUserSyncData) {
+    private void modifySyncData_twitter(long twitterId, ArrayList<JsonObject> tweets, JsonObject independentUserSyncData) {
         if (!AuthenticationController.getInstance().isLogin())
             return;
 
         JsonObject obj = new JsonObject();
+        obj.addProperty("twitterId", twitterId);
         obj.addProperty("twitterSyncTime", getLatestDateTime(POST_TYPE.TWITTER, tweets, independentUserSyncData));
         FireBaseDB.getInstance().modifyData(syncPath + "/" + independentUserSyncData.get("key").getAsString(), obj);
     }
 
-    public void syncData_facebook(ArrayList<JsonObject> posts) {
-        if (!AuthenticationController.getInstance().isLogin())
-            return;
-
-        JsonObject userSyncData = FireBaseDB.getInstance().getData(syncPath);
-        if (userSyncData == null || !isCurrentSyncDataExisted(userSyncData)) {
-            initSyncData_facebook(posts);
+    private boolean isSameTwitterAccount(long twitterId, JsonObject independentUserSyncData) {
+        if (independentUserSyncData.has("twitterId")) {
+            long userSyncData_twitterId = independentUserSyncData.get("twitterId").getAsLong();
+            return twitterId == userSyncData_twitterId;
         } else {
-            JsonObject independentUserSyncData = extractIndependentUserSyncData(userSyncData);
-            modifySyncData_facebook(posts, independentUserSyncData);
+            return true;
         }
     }
 
-    private void initSyncData_facebook(ArrayList<JsonObject> posts) {
+    public boolean syncData_facebook(String facebookId, ArrayList<JsonObject> posts) {
+        JsonObject userSyncData = FireBaseDB.getInstance().getData(syncPath);
+        if (userSyncData == null || !isCurrentSyncDataExisted(userSyncData)) {
+            initSyncData_facebook(facebookId, posts);
+            return true;
+        } else {
+            JsonObject independentUserSyncData = extractIndependentUserSyncData(userSyncData);
+            if (isSameFacebookAccount(facebookId, independentUserSyncData)) {
+                modifySyncData_facebook(facebookId, posts, independentUserSyncData);
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    private void initSyncData_facebook(String facebookId, ArrayList<JsonObject> posts) {
         AuthenticationController ac = AuthenticationController.getInstance();
         if (!ac.isLogin())
             return;
 
         JsonObject obj = new JsonObject();
         obj.addProperty("uid", ac.getCurrentCSUser().getLocalId());
+        obj.addProperty("facebookId", facebookId);
         obj.addProperty("facebookSyncTime", getLatestDateTime(POST_TYPE.FACEBOOK, posts));
         FireBaseDB.getInstance().writeData(syncPath, obj);
     }
 
-    private void modifySyncData_facebook(ArrayList<JsonObject> posts, JsonObject independentUserSyncData) {
+    private void modifySyncData_facebook(String facebookId, ArrayList<JsonObject> posts, JsonObject independentUserSyncData) {
         if (!AuthenticationController.getInstance().isLogin())
             return;
 
         JsonObject obj = new JsonObject();
+        obj.addProperty("facebookId", facebookId);
         obj.addProperty("facebookSyncTime", getLatestDateTime(POST_TYPE.FACEBOOK, posts, independentUserSyncData));
         FireBaseDB.getInstance().modifyData(syncPath + "/" + independentUserSyncData.get("key").getAsString(), obj);
+    }
+
+    private boolean isSameFacebookAccount(String facebookId, JsonObject independentUserSyncData) {
+        if (independentUserSyncData.has("facebookId")) {
+            String userSyncData_facebookId = independentUserSyncData.get("facebookId").getAsString();
+            return facebookId.equals(userSyncData_facebookId);
+        } else {
+            return true;
+        }
     }
 
     private boolean isCurrentSyncDataExisted(JsonObject userSyncData) {
@@ -148,6 +176,10 @@ public class UserSyncController {
             JsonObject obj = entry.getValue().getAsJsonObject();
             if (obj.get("uid").getAsString().equals(AuthenticationController.getInstance().getCurrentCSUser().getLocalId())) {
                 obj.addProperty("key", entry.getKey());
+                if (obj.has("twitterId"))
+                    obj.addProperty("twitterId", obj.get("twitterId").getAsLong());
+                if (obj.has("facebookId"))
+                    obj.addProperty("facebookId", obj.get("facebookId").getAsString());
                 return obj;
             }
         }

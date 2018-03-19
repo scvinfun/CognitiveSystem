@@ -6,6 +6,9 @@ import Authentication.UserSyncController;
 import CognitiveServices.ComputerVisionController;
 import CognitiveServices.TextAnalyticsController;
 import Database.FireBaseDB;
+import InformationExtractor.FacebookController;
+import InformationExtractor.SocialStaticData;
+import InformationExtractor.TwitterController;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -13,6 +16,11 @@ import edu.cmu.lti.lexical_db.ILexicalDatabase;
 import edu.cmu.lti.lexical_db.NictWordNet;
 import edu.cmu.lti.ws4j.impl.WuPalmer;
 import edu.cmu.lti.ws4j.util.WS4JConfiguration;
+import org.springframework.social.facebook.api.PagedList;
+import org.springframework.social.facebook.api.Post;
+import org.springframework.social.facebook.api.User;
+import org.springframework.social.twitter.api.Tweet;
+import org.springframework.social.twitter.api.TwitterProfile;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.BufferedReader;
@@ -20,11 +28,11 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.apache.http.HttpHeaders.USER_AGENT;
 
@@ -114,28 +122,11 @@ public class WebAppInterface {
         return result;
     }
 
-    @RequestMapping("/db")
-    public void test6() throws Exception {
-        AuthenticationController.getInstance().loginWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
-        System.out.println(FireBaseDB.getInstance().getData("fad"));
-        JsonObject obj = new JsonObject();
-        obj.addProperty("test", 1);
-        obj.addProperty("tse", true);
-        obj.addProperty("rr", "test");
-        FireBaseDB.getInstance().writeData("path", obj);
-    }
-
     @RequestMapping("/en")
     public void test5() {
         Encryptor encryptor = Encryptor.getInstance();
         String s = encryptor.encrypt("vinfun2004");
         System.out.println("E:" + s + " D:" + encryptor.decrypt(s));
-    }
-
-    @RequestMapping("/sync")
-    public void test7() {
-        AuthenticationController.getInstance().loginWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
-        UserSyncController usc = UserSyncController.getInstance();
     }
 
     @RequestMapping("/patch")
@@ -187,7 +178,43 @@ public class WebAppInterface {
 
         JsonObject obj = new JsonObject();
         obj.addProperty("email", authController.getCurrentCSUser().getEmail());
-        obj.add("userSyncData",UserSyncController.getInstance().getUserSyncData());
+        obj.add("userSyncData", UserSyncController.getInstance().getUserSyncData());
+
+        return obj.toString();
+    }
+
+    @PostMapping("SyncFacebook")
+    public String SyncFacebook() {
+        AuthenticationController authController = AuthenticationController.getInstance();
+        if (!authController.isLogin())
+            return null;
+
+        User currentFacebookUser = SocialStaticData.facebook.fetchObject("me", User.class, "id", "about", "age_range", "birthday", "context", "cover", "currency", "devices", "education", "email", "favorite_athletes", "favorite_teams", "first_name", "gender", "hometown", "inspirational_people", "installed", "install_type", "is_verified", "languages", "last_name", "link", "locale", "location", "meeting_for", "middle_name", "name", "name_format", "political", "quotes", "payment_pricepoints", "relationship_status", "religion", "security_settings", "significant_other", "sports", "test_group", "timezone", "third_party_id", "updated_time", "verified", "video_upload_limits", "viewer_can_send_gift", "website", "work");
+        PagedList<Post> feed = SocialStaticData.facebook.feedOperations().getFeed();
+        ArrayList<JsonObject> facebookDetail = FacebookController.getInstance().getFacebookDetail(feed);
+
+        boolean success = UserSyncController.getInstance().syncData_facebook(currentFacebookUser.getId(), facebookDetail);
+
+        JsonObject obj = new JsonObject();
+        obj.addProperty("successSync", success);
+
+        return obj.toString();
+    }
+
+    @PostMapping("SyncTwitter")
+    public String SyncTwitter() {
+        AuthenticationController authController = AuthenticationController.getInstance();
+        if (!authController.isLogin())
+            return null;
+
+        TwitterProfile twitterProfile = SocialStaticData.twitter.userOperations().getUserProfile();
+        List<Tweet> list = SocialStaticData.twitter.timelineOperations().getUserTimeline();
+        ArrayList<JsonObject> tweets = TwitterController.getInstance().getTweetDetail(list);
+
+        boolean success = UserSyncController.getInstance().syncData_twitter(twitterProfile.getId(), tweets);
+
+        JsonObject obj = new JsonObject();
+        obj.addProperty("successSync", success);
 
         return obj.toString();
     }

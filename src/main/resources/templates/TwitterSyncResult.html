@@ -1,6 +1,14 @@
 <html>
-
 <title>Cognitive System</title>
+<script>
+    window.onload = function () {
+        var result = document.getElementById("result").innerHTML;
+        if (result == "true")
+            document.getElementById("title").innerHTML = "Synchronization is Finished"
+        else
+            document.getElementById("title").innerHTML = "Failed to synchronize - Incorrect Twitter Account"
+    };
+</script>
 <style>
     body {
         background: -webkit-linear-gradient(45deg, hsla(340, 100%, 55%, 1) 0%, hsla(340, 100%, 55%, 0) 70%), -webkit-linear-gradient(315deg, hsla(225, 95%, 50%, 1) 10%, hsla(225, 95%, 50%, 0) 80%), -webkit-linear-gradient(225deg, hsla(140, 90%, 50%, 1) 10%, hsla(140, 90%, 50%, 0) 80%), -webkit-linear-gradient(135deg, hsla(35, 95%, 55%, 1) 100%, hsla(35, 95%, 55%, 0) 70%);
@@ -11,13 +19,20 @@
         margin: 30px auto;
     }
 
-    h2,
-    form {
+    .hidden {
+        display: none;
+    }
+
+    h3 {
         color: white;
         text-align: center;
         background-color: rgba(0, 0, 0, 0.3);
         border-radius: 5px;
         padding: 5px;
+    }
+
+    div {
+        text-align: center;
     }
 
     .button {
@@ -27,17 +42,11 @@
         background: rgb(28, 184, 65);
     }
 </style>
-
 <body>
-<h2>Successful</h2>
-<form>
-    <div class="formInfo" action="/fb_login">
-        <p>Login successfully. Please click the button below to link the facebook account to the cognitive system
-        </p>
-    </div>
-    <p>
-        <input class="button" type="button" value="Link" onclick="window.location.href='/fb_login'"/>
-    </p>
-</form>
+<span id="result" class="hidden" th:text="${successSync}"></span>
+<h3 id="title"></h3>
+<div>
+    <input class="button" type="button" value="Close" onclick="window.close()"/>
+</div>
 </body>
 </html>

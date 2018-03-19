@@ -1,16 +1,43 @@
 <html>
-<head>
-    <title>Hello Facebook</title>
-</head>
-<body>
-<h3>Connect to Facebook</h3>
 
+<title>Cognitive System</title>
+<style>
+    body {
+        background: -webkit-linear-gradient(45deg, hsla(340, 100%, 55%, 1) 0%, hsla(340, 100%, 55%, 0) 70%), -webkit-linear-gradient(315deg, hsla(225, 95%, 50%, 1) 10%, hsla(225, 95%, 50%, 0) 80%), -webkit-linear-gradient(225deg, hsla(140, 90%, 50%, 1) 10%, hsla(140, 90%, 50%, 0) 80%), -webkit-linear-gradient(135deg, hsla(35, 95%, 55%, 1) 100%, hsla(35, 95%, 55%, 0) 70%);
+        background: linear-gradient(45deg, hsla(340, 100%, 55%, 1) 0%, hsla(340, 100%, 55%, 0) 70%), linear-gradient(135deg, hsla(225, 95%, 50%, 1) 10%, hsla(225, 95%, 50%, 0) 80%), linear-gradient(225deg, hsla(140, 90%, 50%, 1) 10%, hsla(140, 90%, 50%, 0) 80%), linear-gradient(315deg, hsla(35, 95%, 55%, 1) 100%, hsla(35, 95%, 55%, 0) 70%);
+        width: 300px;
+        height: 300px;
+        overflow: hidden;
+        margin: 30px auto;
+    }
+
+    h2,
+    form {
+        color: white;
+        text-align: center;
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 5px;
+        padding: 5px;
+    }
+
+    button {
+        color: white;
+        border-radius: 4px;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+        background: rgb(28, 184, 65);
+    }
+</style>
+
+<body>
+<h2>Connect to Facebook</h2>
 <form action="/connect/facebook" method="POST">
-    <input type="hidden" name="scope" value="user_posts" />
     <div class="formInfo">
-        <p>You aren't connected to Facebook yet. Click the button to connect this application with your Facebook account.</p>
+        <p>You aren't connected to Facebook yet. Click the button to connect this application with your Facebook account
+        </p>
     </div>
-    <p><button type="submit">Connect to Facebook</button></p>
+    <p>
+        <button type="submit">Connect to Facebook</button>
+    </p>
 </form>
 </body>
 </html>
