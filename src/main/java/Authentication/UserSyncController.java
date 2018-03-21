@@ -8,8 +8,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-// TODO CST/HKT
-
 public class UserSyncController {
     public enum POST_TYPE {
         TWITTER,
@@ -77,7 +75,7 @@ public class UserSyncController {
         }
     }
 
-    public boolean syncData_facebook(String facebookId, ArrayList<JsonObject> posts) {
+    public boolean syncData_facebook(long facebookId, ArrayList<JsonObject> posts) {
         JsonObject userSyncData = FireBaseDB.getInstance().getData(syncPath);
         if (userSyncData == null || !isCurrentSyncDataExisted(userSyncData)) {
             initSyncData_facebook(facebookId, posts);
@@ -93,7 +91,7 @@ public class UserSyncController {
         }
     }
 
-    private void initSyncData_facebook(String facebookId, ArrayList<JsonObject> posts) {
+    private void initSyncData_facebook(long facebookId, ArrayList<JsonObject> posts) {
         AuthenticationController ac = AuthenticationController.getInstance();
         if (!ac.isLogin())
             return;
@@ -105,7 +103,7 @@ public class UserSyncController {
         FireBaseDB.getInstance().writeData(syncPath, obj);
     }
 
-    private void modifySyncData_facebook(String facebookId, ArrayList<JsonObject> posts, JsonObject independentUserSyncData) {
+    private void modifySyncData_facebook(long facebookId, ArrayList<JsonObject> posts, JsonObject independentUserSyncData) {
         if (!AuthenticationController.getInstance().isLogin())
             return;
 
@@ -115,10 +113,10 @@ public class UserSyncController {
         FireBaseDB.getInstance().modifyData(syncPath + "/" + independentUserSyncData.get("key").getAsString(), obj);
     }
 
-    private boolean isSameFacebookAccount(String facebookId, JsonObject independentUserSyncData) {
+    private boolean isSameFacebookAccount(long facebookId, JsonObject independentUserSyncData) {
         if (independentUserSyncData.has("facebookId")) {
-            String userSyncData_facebookId = independentUserSyncData.get("facebookId").getAsString();
-            return facebookId.equals(userSyncData_facebookId);
+            long userSyncData_facebookId = independentUserSyncData.get("facebookId").getAsLong();
+            return facebookId == userSyncData_facebookId;
         } else {
             return true;
         }
@@ -179,7 +177,7 @@ public class UserSyncController {
                 if (obj.has("twitterId"))
                     obj.addProperty("twitterId", obj.get("twitterId").getAsLong());
                 if (obj.has("facebookId"))
-                    obj.addProperty("facebookId", obj.get("facebookId").getAsString());
+                    obj.addProperty("facebookId", obj.get("facebookId").getAsLong());
                 return obj;
             }
         }

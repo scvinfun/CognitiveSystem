@@ -1,9 +1,9 @@
 package com.shing.cognitivesystem;
 
 import Authentication.AuthenticationController;
-import Authentication.Encryptor;
 import Authentication.UserSyncController;
 import CognitiveServices.ComputerVisionController;
+import CognitiveServices.POSTaggingController;
 import CognitiveServices.TextAnalyticsController;
 import Database.FireBaseDB;
 import InformationExtractor.FacebookController;
@@ -24,6 +24,7 @@ import org.springframework.social.twitter.api.TwitterProfile;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -122,19 +123,9 @@ public class WebAppInterface {
         return result;
     }
 
-    @RequestMapping("/en")
-    public void test5() {
-        Encryptor encryptor = Encryptor.getInstance();
-        String s = encryptor.encrypt("vinfun2004");
-        System.out.println("E:" + s + " D:" + encryptor.decrypt(s));
-    }
-
-    @RequestMapping("/patch")
-    public void test8() {
-        AuthenticationController.getInstance().loginWithEmailPassword("scvinfun@gmail.com", "vinfun2004");
-        JsonObject r = new JsonObject();
-        r.addProperty("rr", "fdfa");
-        FireBaseDB.getInstance().modifyData("path/-L2j1JIjs0s4XxoxkZSI", r);
+    @RequestMapping("tg")
+    public void test4() throws IOException {
+        POSTaggingController.getInstance().tagging("Most large cities in the US,for example New york , had morning and afternoon newspapers.");
     }
 
     /* Production Functions */
@@ -193,7 +184,7 @@ public class WebAppInterface {
         PagedList<Post> feed = SocialStaticData.facebook.feedOperations().getFeed();
         ArrayList<JsonObject> facebookDetail = FacebookController.getInstance().getFacebookDetail(feed);
 
-        boolean success = UserSyncController.getInstance().syncData_facebook(currentFacebookUser.getId(), facebookDetail);
+        boolean success = UserSyncController.getInstance().syncData_facebook(Long.parseLong(currentFacebookUser.getId()), facebookDetail);
 
         JsonObject obj = new JsonObject();
         obj.addProperty("successSync", success);

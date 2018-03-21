@@ -37,7 +37,7 @@ public class FacebookInterface {
         PagedList<Post> feed = facebook.feedOperations().getFeed();
         ArrayList<JsonObject> facebookDetail = FacebookController.getInstance().getFacebookDetail(feed);
 
-        boolean success = UserSyncController.getInstance().syncData_facebook(currentFacebookUser.getId(), facebookDetail);
+        boolean success = UserSyncController.getInstance().syncData_facebook(Long.parseLong(currentFacebookUser.getId()), facebookDetail);
         model.addAttribute("successSync", success + "");
 
         return "FacebookSyncResult";
