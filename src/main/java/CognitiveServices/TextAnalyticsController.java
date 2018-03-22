@@ -10,15 +10,15 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-class Document {
+class Document_TA {
     private String id, language, text;
 
-    public Document(String id, String text) {
+    public Document_TA(String id, String text) {
         this.id = id;
         this.text = text;
     }
 
-    public Document(String id, String language, String text) {
+    public Document_TA(String id, String language, String text) {
         this.id = id;
         this.language = language;
         this.text = text;
@@ -33,19 +33,19 @@ class Document {
     }
 }
 
-class Documents {
-    private List<Document> documents;
+class Documents_TA {
+    private List<Document_TA> documents;
 
-    public Documents() {
-        this.documents = new ArrayList<Document>();
+    public Documents_TA() {
+        this.documents = new ArrayList<Document_TA>();
     }
 
     public void add(String id, String text) {
-        this.documents.add(new Document(id, text));
+        this.documents.add(new Document_TA(id, text));
     }
 
     public void add(String id, String language, String text) {
-        this.documents.add(new Document(id, language, text));
+        this.documents.add(new Document_TA(id, language, text));
     }
 
     public void remove(String id) {
@@ -55,7 +55,7 @@ class Documents {
     }
 
     public void updateLanguage() {
-        for (Document d : this.documents) {
+        for (Document_TA d : this.documents) {
             d.setLanguage("en");
         }
     }
@@ -72,7 +72,7 @@ public class TextAnalyticsController {
         return instance;
     }
 
-    private String serviceCall(Documents documents, String serviceName) throws Exception {
+    private String serviceCall(Documents_TA documents, String serviceName) throws Exception {
         String text = new Gson().toJson(documents);
         byte[] encoded_text = text.getBytes("UTF-8");
 
@@ -109,7 +109,7 @@ public class TextAnalyticsController {
 
     public String TextAnalyticsService(String... sentences) {
         try {
-            Documents documents = new Documents();
+            Documents_TA documents = new Documents_TA();
             // detecting language
             for (int i = 0; i < sentences.length; i++) {
                 documents.add(String.valueOf(i + 1), sentences[i]);

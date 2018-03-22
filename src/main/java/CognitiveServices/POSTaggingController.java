@@ -1,15 +1,18 @@
 package CognitiveServices;
 
-import opennlp.tools.postag.POSModel;
-import opennlp.tools.postag.POSTaggerME;
+import edu.stanford.nlp.pipeline.CoreDocument;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import edu.stanford.nlp.simple.Document;
+import edu.stanford.nlp.simple.Sentence;
+import edu.stanford.nlp.util.PropertiesUtils;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class POSTaggingController {
     private static POSTaggingController instance = null;
-    POSTaggerME tagger = null;
 
     public static POSTaggingController getInstance() throws IOException {
         if (instance == null) {
@@ -18,16 +21,29 @@ public class POSTaggingController {
         return instance;
     }
 
-    private POSTaggingController() throws IOException {
-        if (tagger == null) {
-            InputStream modelIn = new FileInputStream(getClass().getResource("").getPath().split("target")[0] + "src/main/POSTag/en-pos-maxent.bin");
-            POSModel model = new POSModel(modelIn);
-            tagger = new POSTaggerME(model);
+    public void tagging() {
+        String text = "Joe Smith was born in California. " +
+                "In 2017, he went to Paris, France in the summer. " +
+                "His flight left at 3:00pm on July 10th, 2017. " +
+                "After eating some escargot for the first time, Joe said, \"That was delicious!\" " +
+                "He sent a postcard to his sister Jane Smith. " +
+                "After hearing about Joe's trip, Jane decided she might go to France one day.";
+
+        Document doc = new Document(text);
+        for (Sentence sent : doc.sentences()) {  // Will iterate over two sentences
+            System.out.println("The second word of the sentence '" + sent + "' is " + sent.word(1));
+            System.out.println("The third lemma of the sentence '" + sent + "' is " + sent.lemma(2));
+            System.out.println("The parse of the sentence '" + sent + "' is " + sent.parse());
+            System.out.println();
         }
     }
 
-    public void tagging(String sentence) {
-        String[] words = sentence.split("\\W+");
-        String tags[] = tagger.tag(words);
+    private boolean isQuotationSentence(String sentence) {
+        Pattern pattern = Pattern.compile("\"(.*?)\"");
+        Matcher matcher = pattern.matcher(sentence);
+        if (matcher.find())
+            return true;
+        else
+            return false;
     }
 }

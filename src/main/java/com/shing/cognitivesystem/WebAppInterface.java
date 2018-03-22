@@ -125,7 +125,7 @@ public class WebAppInterface {
 
     @RequestMapping("tg")
     public void test4() throws IOException {
-        POSTaggingController.getInstance().tagging("Most large cities in the US,for example New york , had morning and afternoon newspapers.");
+        POSTaggingController.getInstance().tagging();
     }
 
     /* Production Functions */
