@@ -14,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 
 @Controller
@@ -28,7 +29,7 @@ public class FacebookInterface {
     }
 
     @GetMapping
-    public String helloFacebook(Model model) {
+    public String helloFacebook(Model model) throws ParseException {
         if (connectionRepository.findPrimaryConnection(Facebook.class) == null) {
             return "redirect:/connect/facebook";
         }

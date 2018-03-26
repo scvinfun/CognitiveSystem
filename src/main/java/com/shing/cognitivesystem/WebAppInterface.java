@@ -3,7 +3,7 @@ package com.shing.cognitivesystem;
 import Authentication.AuthenticationController;
 import Authentication.UserSyncController;
 import CognitiveServices.ComputerVisionController;
-import CognitiveServices.POSTaggingController;
+import CognitiveServices.DiagnosisController;
 import CognitiveServices.TextAnalyticsController;
 import Database.FireBaseDB;
 import InformationExtractor.FacebookController;
@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +126,7 @@ public class WebAppInterface {
 
     @RequestMapping("tg")
     public void test4() throws IOException {
-        POSTaggingController.getInstance().tagging();
+        DiagnosisController.getInstance().tagging();
     }
 
     /* Production Functions */
@@ -162,7 +163,7 @@ public class WebAppInterface {
     }
 
     @GetMapping("GetUserInfo")
-    public String GetUserInfo() {
+    public String GetUserInfo() throws ParseException {
         AuthenticationController authController = AuthenticationController.getInstance();
         if (!authController.isLogin())
             return null;
@@ -175,7 +176,7 @@ public class WebAppInterface {
     }
 
     @PostMapping("SyncFacebook")
-    public String SyncFacebook() {
+    public String SyncFacebook() throws ParseException {
         AuthenticationController authController = AuthenticationController.getInstance();
         if (!authController.isLogin())
             return null;
@@ -193,7 +194,7 @@ public class WebAppInterface {
     }
 
     @PostMapping("SyncTwitter")
-    public String SyncTwitter() {
+    public String SyncTwitter() throws ParseException {
         AuthenticationController authController = AuthenticationController.getInstance();
         if (!authController.isLogin())
             return null;

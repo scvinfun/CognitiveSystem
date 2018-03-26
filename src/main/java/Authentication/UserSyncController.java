@@ -16,6 +16,8 @@ public class UserSyncController {
 
     private static UserSyncController instance = null;
     private String syncPath = null;
+    private SimpleDateFormat sdf = null;
+    private SimpleDateFormat sdf_display = null;
 
     public static UserSyncController getInstance() {
         if (instance == null) {
@@ -26,17 +28,47 @@ public class UserSyncController {
 
     private UserSyncController() {
         syncPath = "UserSyncData";
+        sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+        sdf_display = new SimpleDateFormat("dd/MMM/yyyy - HH:mm", Locale.US);
     }
 
-    public boolean syncData_twitter(long twitterId, ArrayList<JsonObject> tweets) {
+    private void diagnoseAllData(POST_TYPE postType, ArrayList<JsonObject> tweets) throws ParseException {
+        diagnoseData(postType, tweets, null);
+    }
+
+    private void diagnoseData(POST_TYPE postType, ArrayList<JsonObject> posts, String syncTime_str) throws ParseException {
+        if (syncTime_str != null) {
+            Date syncTime = sdf.parse(syncTime_str);
+            ArrayList<JsonObject> posts_copy = new ArrayList<>(posts);
+            for (JsonObject obj : posts) {
+                Date createAt = sdf.parse(obj.get("createAt").getAsString());
+                if (createAt.before(syncTime) || createAt.equals(syncTime))
+                    posts_copy.remove(obj);
+            }
+
+            posts = posts_copy;
+            System.out.println("sorting");
+        }
+
+        //TODO
+        // handling diagnostic function
+        System.out.println("diagnosis");
+    }
+
+    public boolean syncData_twitter(long twitterId, ArrayList<JsonObject> tweets) throws ParseException {
         JsonObject userSyncData = FireBaseDB.getInstance().getData(syncPath);
         if (userSyncData == null || !isCurrentSyncDataExisted(userSyncData)) {
             initSyncData_twitter(twitterId, tweets);
+            diagnoseAllData(POST_TYPE.TWITTER, tweets);
             return true;
         } else {
             JsonObject independentUserSyncData = extractIndependentUserSyncData(userSyncData);
-            if (isSameTwitterAccount(twitterId, independentUserSyncData)) {
+            if (isSameTwitterAccount(twitterId, independentUserSyncData) && !isSameSyncTime(POST_TYPE.TWITTER, tweets, independentUserSyncData)) {
                 modifySyncData_twitter(twitterId, tweets, independentUserSyncData);
+                if (independentUserSyncData.has("twitterSyncTime"))
+                    diagnoseData(POST_TYPE.TWITTER, tweets, independentUserSyncData.get("twitterSyncTime").getAsString());
+                else
+                    diagnoseAllData(POST_TYPE.TWITTER, tweets);
                 return true;
             } else {
                 return false;
@@ -75,15 +107,20 @@ public class UserSyncController {
         }
     }
 
-    public boolean syncData_facebook(long facebookId, ArrayList<JsonObject> posts) {
+    public boolean syncData_facebook(long facebookId, ArrayList<JsonObject> posts) throws ParseException {
         JsonObject userSyncData = FireBaseDB.getInstance().getData(syncPath);
         if (userSyncData == null || !isCurrentSyncDataExisted(userSyncData)) {
             initSyncData_facebook(facebookId, posts);
+            diagnoseAllData(POST_TYPE.FACEBOOK, posts);
             return true;
         } else {
             JsonObject independentUserSyncData = extractIndependentUserSyncData(userSyncData);
-            if (isSameFacebookAccount(facebookId, independentUserSyncData)) {
+            if (isSameFacebookAccount(facebookId, independentUserSyncData) && !isSameSyncTime(POST_TYPE.FACEBOOK, posts, independentUserSyncData)) {
                 modifySyncData_facebook(facebookId, posts, independentUserSyncData);
+                if (independentUserSyncData.has("facebookSyncTime"))
+                    diagnoseData(POST_TYPE.FACEBOOK, posts, independentUserSyncData.get("facebookSyncTime").getAsString());
+                else
+                    diagnoseAllData(POST_TYPE.FACEBOOK, posts);
                 return true;
             } else {
                 return false;
@@ -146,14 +183,13 @@ public class UserSyncController {
     }
 
     private String getLatestDateTime(POST_TYPE postType, ArrayList<JsonObject> posts, JsonObject independentUserSyncData) {
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
         Date latestDateTime = null;
 
         try {
             if (independentUserSyncData != null)
-                if (postType == POST_TYPE.TWITTER && independentUserSyncData.has("twitter"))
+                if (postType == POST_TYPE.TWITTER && independentUserSyncData.has("twitterId"))
                     latestDateTime = sdf.parse(independentUserSyncData.get("twitterSyncTime").getAsString());
-                else if (postType == POST_TYPE.FACEBOOK && independentUserSyncData.has("facebook"))
+                else if (postType == POST_TYPE.FACEBOOK && independentUserSyncData.has("facebookId"))
                     latestDateTime = sdf.parse(independentUserSyncData.get("facebookSyncTime").getAsString());
 
             for (JsonObject t : posts) {
@@ -166,6 +202,21 @@ public class UserSyncController {
         }
 
         return latestDateTime.toString();
+    }
+
+    private boolean isSameSyncTime(POST_TYPE postType, ArrayList<JsonObject> posts, JsonObject independentUserSyncData) throws ParseException {
+        Date current_SynTime = sdf.parse(getLatestDateTime(postType, posts));
+
+        Date syncData_SynTime = null;
+        if (postType == POST_TYPE.TWITTER && independentUserSyncData.has("twitterId"))
+            syncData_SynTime = sdf.parse(independentUserSyncData.get("twitterSyncTime").getAsString());
+        else if (postType == POST_TYPE.FACEBOOK && independentUserSyncData.has("facebookId"))
+            syncData_SynTime = sdf.parse(independentUserSyncData.get("facebookSyncTime").getAsString());
+
+        if (syncData_SynTime == null)
+            return false;
+        else
+            return syncData_SynTime.equals(current_SynTime);
     }
 
     private JsonObject extractIndependentUserSyncData(JsonObject userSyncData) {
@@ -185,7 +236,7 @@ public class UserSyncController {
         return null;
     }
 
-    public JsonObject getUserSyncData() {
+    public JsonObject getUserSyncData() throws ParseException {
         JsonObject result = new JsonObject();
 
         JsonObject userSyncData = FireBaseDB.getInstance().getData(syncPath);
@@ -193,6 +244,17 @@ public class UserSyncController {
             result.addProperty("syncDataIsExisted", false);
         } else {
             result = extractIndependentUserSyncData(userSyncData);
+            if (result.has("twitterSyncTime")) {
+                String twitterSyncTime = result.get("twitterSyncTime").getAsString();
+                result.remove("twitterSyncTime");
+                result.addProperty("twitterSyncTime", sdf_display.format(sdf.parse(twitterSyncTime)));
+            }
+            if (result.has("facebookSyncTime")) {
+                String facebookSyncTime = result.get("facebookSyncTime").getAsString();
+                result.remove("facebookSyncTime");
+                result.addProperty("facebookSyncTime", sdf_display.format(sdf.parse(facebookSyncTime)));
+            }
+
             result.addProperty("syncDataIsExisted", true);
         }
 
