@@ -24,7 +24,6 @@ import org.springframework.social.twitter.api.TwitterProfile;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -125,8 +124,18 @@ public class WebAppInterface {
     }
 
     @RequestMapping("tg")
-    public void test4() throws IOException {
-        DiagnosisController.getInstance().tagging();
+    public void test4() {
+        String s = "I feel nervous talking with anybody.";
+        String keyphrases_adj = TextAnalyticsController.getInstance().TextAnalyticsService_Adj(s);
+        boolean isSelfSubject = DiagnosisController.getInstance().isSelfSubject(s, "nervous");
+        System.out.println();
+        System.out.println();
+    }
+
+    @RequestMapping("di")
+    public void test5() {
+        AuthenticationController.getInstance().loginWithEmailPassword("sukm2004@gmail.com", "sukm2004");
+        DiagnosisController.getInstance().diagnose(null);
     }
 
     /* Production Functions */

@@ -1,6 +1,9 @@
 package CognitiveServices;
 
 import com.google.gson.*;
+import edu.stanford.nlp.simple.Document;
+import edu.stanford.nlp.simple.Sentence;
+import edu.stanford.nlp.trees.Tree;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
@@ -154,5 +157,50 @@ public class TextAnalyticsController {
         }
 
         return language;
+    }
+
+    public String TextAnalyticsService_Adj(String sentences) {
+        String result = "";
+        ArrayList<String> adjKeyPhrases = getAdjKeyPhrases(sentences);
+        for (int i = 0; i < adjKeyPhrases.size(); i++) {
+            if (i == adjKeyPhrases.size() - 1)
+                result += adjKeyPhrases.get(i);
+            else
+                result += adjKeyPhrases.get(i) + ",";
+        }
+
+        return result;
+    }
+
+    private ArrayList<String> getAdjKeyPhrases(String text) {
+        text = text.toLowerCase();
+        ArrayList<Tree> keyPhrases = new ArrayList<>();
+        ArrayList<String> result = new ArrayList<>();
+
+        Document doc = new Document(text);
+        for (Sentence sentence : doc.sentences()) {
+            Tree tree = sentence.parse();
+            getAllLeaf(keyPhrases, tree);
+
+            if (keyPhrases.size() > 0) {
+                for (Tree t : keyPhrases) {
+                    if (t.toString().contains("JJ") || t.toString().contains("JJR") || t.toString().contains("JJS"))
+                        result.add(t.getChild(0).toString());
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private void getAllLeaf(ArrayList<Tree> container, Tree tree) {
+        if (tree.depth() == 1) {
+            container.add(tree);
+            return;
+        }
+
+        for (Tree t : tree.children()) {
+            getAllLeaf(container, t);
+        }
     }
 }
