@@ -1,8 +1,10 @@
 package CognitiveServices;
 
-import Authentication.AuthenticationController;
+import Authentication.UserSyncController;
 import Database.FireBaseDB;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import edu.stanford.nlp.ie.util.RelationTriple;
 import edu.stanford.nlp.simple.Document;
 import edu.stanford.nlp.simple.Sentence;
@@ -24,18 +26,28 @@ public class DiagnosisController {
         return instance;
     }
 
-    public void diagnose(ArrayList<JsonObject> posts) {
+    public void diagnose(UserSyncController.POST_TYPE postType, ArrayList<JsonObject> posts) throws Exception {
+        // testing data
+        posts = new ArrayList<>();
+        JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"Testing again \",\"photos\":[\"https://pbs.twimg.com/media/DTL-AEDV4AAPpkW.jpg:large\",\"https://pbs.twimg.com/media/DTL-A7TU0AEbhIb.jpg:large\"]}");
+        posts.add(etest.getAsJsonObject());
+
         // handle each post
         for (JsonObject obj : posts) {
+            // get key phrases
             String origin_text = obj.get("text").getAsString();
+            ArrayList<String> keyPhrases = TextAnalyticsController.getInstance().TextAnalyticsService(origin_text);
 
-            // handle each sentence in a single post
-            Document doc = new Document(origin_text);
-            ArrayList<String> keyPhrases = new ArrayList<>();
-            for (Sentence sentence : doc.sentences()) {
-                // TA get key phrases
+            // get other key phrases if Computer Vision service available
+            ArrayList<String> keyPhrases_CV;
+            if (obj.has("photos")) {
+                String captions = "";
+                ComputerVisionController cvc = ComputerVisionController.getInstance();
 
-                //keyPhrases.add();
+                for (JsonElement e : obj.get("photos").getAsJsonArray()) {
+                    captions += cvc.ComputerVisionService(e.getAsString()) + ". ";
+                }
+                keyPhrases_CV = TextAnalyticsController.getInstance().TextAnalyticsService(captions);
             }
 
             // compare with rules

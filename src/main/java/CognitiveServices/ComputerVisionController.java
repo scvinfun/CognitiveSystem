@@ -1,5 +1,9 @@
 package CognitiveServices;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -52,13 +56,29 @@ public class ComputerVisionController {
                 // Format and display the JSON response.
                 String jsonString = EntityUtils.toString(entity);
                 JSONObject json = new JSONObject(jsonString);
-                result = json.toString(2);
+                result = getCaptionBasedOnConfidence(json.toString(2));
             }
         } catch (Exception e) {
-            // Display error message.
-            result = e.getMessage();
+            result = null;
         }
 
         return result;
+    }
+
+    private String getCaptionBasedOnConfidence(String response) {
+        JsonObject obj = new JsonParser().parse(response).getAsJsonObject();
+        JsonArray captions = obj.get("description").getAsJsonObject().get("captions").getAsJsonArray();
+        double confidence = 0;
+        String result = "";
+        for (JsonElement e : captions) {
+            JsonObject e_JsonObject = e.getAsJsonObject();
+            double e_confidence = e_JsonObject.get("confidence").getAsDouble();
+            if (e_confidence > confidence) {
+                confidence = e_confidence;
+                result = e_JsonObject.get("text").getAsString();
+            }
+        }
+        return result;
+
     }
 }

@@ -2,7 +2,6 @@ package com.shing.cognitivesystem;
 
 import Authentication.AuthenticationController;
 import Authentication.UserSyncController;
-import CognitiveServices.ComputerVisionController;
 import CognitiveServices.DiagnosisController;
 import CognitiveServices.TextAnalyticsController;
 import Database.FireBaseDB;
@@ -39,16 +38,6 @@ import static org.apache.http.HttpHeaders.USER_AGENT;
 
 @RestController
 public class WebAppInterface {
-    @RequestMapping("/ta")
-    public String test_ta() {
-        return TextAnalyticsController.getInstance().TextAnalyticsService("这是一个用中文写的文件", "Este ha sido un dia terrible, llegué tarde al trabajo debido a un accidente automobilistico.", "I really enjoy the new XBox One S. It has a clean look, it has 4K/HDR resolution and it is affordable.", "The Grand Hotel is a new hotel in the center of Seattle. It earned 5 stars in my review, and has the classiest decor I've ever seen.");
-    }
-
-    @RequestMapping("/cv")
-    public String test_cv() {
-        return ComputerVisionController.getInstance().ComputerVisionService("https://upload.wikimedia.org/wikipedia/commons/1/12/Broadway_and_Times_Square_by_night.jpg");
-    }
-
     private static ILexicalDatabase db = new NictWordNet();
 
     private static double compute(String word1, String word2) {
@@ -58,7 +47,7 @@ public class WebAppInterface {
     }
 
     @RequestMapping("/sr")
-    public String test2() {
+    public String sr() {
         String[] words = {"uneasy", "anxious", "worried"};
         String result = "";
         for (int i = 0; i < words.length - 1; i++) {
@@ -73,7 +62,7 @@ public class WebAppInterface {
     }
 
     @RequestMapping("/sr_2")
-    public String test2_2() {
+    public String sr_2() {
         String[] words = {"tired", "exhausted", "fatigued", "headache", "migraine", "insomnia", "wakefulness", "dog", "cat"};
         String result = "";
 
@@ -123,19 +112,15 @@ public class WebAppInterface {
         return result;
     }
 
-    @RequestMapping("tg")
-    public void test4() {
-        String s = "I feel nervous talking with anybody.";
-        String keyphrases_adj = TextAnalyticsController.getInstance().TextAnalyticsService_Adj(s);
-        boolean isSelfSubject = DiagnosisController.getInstance().isSelfSubject(s, "nervous");
-        System.out.println();
-        System.out.println();
+    @RequestMapping("ta")
+    public void ta() throws Exception {
+        TextAnalyticsController.getInstance().TextAnalyticsService("I really enjoy the new XBox One S. It has a clean look, it has 4K/HDR resolution and it is affordable." + "The Grand Hotel is a new hotel in the center of Seattle. It earned 5 stars in my review, and has the classiest decor I've ever seen.");
     }
 
     @RequestMapping("di")
-    public void test5() {
+    public void test5() throws Exception {
         AuthenticationController.getInstance().loginWithEmailPassword("sukm2004@gmail.com", "sukm2004");
-        DiagnosisController.getInstance().diagnose(null);
+        DiagnosisController.getInstance().diagnose(UserSyncController.POST_TYPE.TWITTER, null);
     }
 
     /* Production Functions */

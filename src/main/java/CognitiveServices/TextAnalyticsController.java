@@ -11,7 +11,9 @@ import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 class Document_TA {
     private String id, language, text;
@@ -75,6 +77,49 @@ public class TextAnalyticsController {
         return instance;
     }
 
+    public ArrayList<String> TextAnalyticsService(String sentences) throws Exception {
+        // detecting language
+        Documents_TA documents = new Documents_TA();
+        documents.add("0", sentences);
+        String languages_response = serviceCall(documents, StaticData.TEXTANALYTICS_TYPE_LANGUAGES);
+        JsonObject obj = new JsonParser().parse(languages_response).getAsJsonObject().getAsJsonArray("documents").get(0).getAsJsonObject();
+        String[] language = getLanguageBaseOnScore(obj.getAsJsonArray("detectedLanguages")).split("-");
+        // not eng language
+        if (!language[0].equals("en"))
+            return null;
+        // is eng language but less score (may contain other language)
+        if (Double.valueOf(language[1]) < 0.9)
+            return null;
+
+        // extract key phrases including both TA service and parsing
+        Document doc = new Document(sentences);
+        ArrayList<String> sentences_list = new ArrayList<>();
+        for (Sentence sentence : doc.sentences()) {
+            sentences_list.add(sentence.toString());
+        }
+        // TA service
+        ArrayList<String> keyPhrases_N = getKeyPhrases(sentences_list);
+        // parsing
+        ArrayList<String> keyPhrases_A = getAdjKeyPhrases(sentences);
+
+        // error response
+        if (keyPhrases_A == null || keyPhrases_N == null)
+            return null;
+
+        // combine results of two service
+        ArrayList<String> result = new ArrayList<>();
+        result.addAll(keyPhrases_N);
+        result.addAll(keyPhrases_A);
+
+        // remove duplicated key phrases
+        Set<String> hs = new HashSet<>();
+        hs.addAll(result);
+        result.clear();
+        result.addAll(hs);
+
+        return result;
+    }
+
     private String serviceCall(Documents_TA documents, String serviceName) throws Exception {
         String text = new Gson().toJson(documents);
         byte[] encoded_text = text.getBytes("UTF-8");
@@ -103,47 +148,33 @@ public class TextAnalyticsController {
         return response.toString();
     }
 
-    private String prettify(String json_text) {
-        JsonParser parser = new JsonParser();
-        JsonObject json = parser.parse(json_text).getAsJsonObject();
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        return gson.toJson(json);
-    }
-
-    public String TextAnalyticsService(String... sentences) {
+    private ArrayList<String> getKeyPhrases(ArrayList<String> sentences) {
         try {
+            // convent sentences to class Document
             Documents_TA documents = new Documents_TA();
-            // detecting language
-            for (int i = 0; i < sentences.length; i++) {
-                documents.add(String.valueOf(i + 1), sentences[i]);
-            }
-            String languages_response = serviceCall(documents, StaticData.TEXTANALYTICS_TYPE_LANGUAGES);
-
-            // remove the sentences which are not written in english
-            ArrayList<String> wrongList = new ArrayList<>();
-            JsonArray json_array = new JsonParser().parse(languages_response).getAsJsonObject().getAsJsonArray("documents");
-            for (JsonElement element : json_array) {
-                JsonObject obj = element.getAsJsonObject();
-                String language = getLanguageBaseOnScore(obj.getAsJsonArray("detectedLanguages"));
-                if (!language.equals("en"))
-                    wrongList.add(obj.get("id").getAsString());
-            }
-            if (wrongList.size() != 0) {
-                for (String id : wrongList) {
-                    documents.remove(id);
-                }
-                documents.updateLanguage();
+            for (int i = 0; i < sentences.size(); i++) {
+                documents.add(String.valueOf(i + 1), sentences.get(i));
             }
 
             // get key phrases
             String keyPhrases_response = serviceCall(documents, StaticData.TEXTANALYTICS_TYPE_KEYPHRASES);
 
             // analyze sentiment
-            String sentiment_response = serviceCall(documents, StaticData.TEXTANALYTICS_TYPE_SENTIMENT);
+            //String sentiment_response = serviceCall(documents, StaticData.TEXTANALYTICS_TYPE_SENTIMENT);
 
-            return prettify(keyPhrases_response);
+            // convert response to ArrayList
+            JsonParser parser = new JsonParser();
+            JsonObject json = parser.parse(keyPhrases_response).getAsJsonObject();
+            ArrayList<String> keyPhrases = new ArrayList<>();
+            if (json.has("documents")) {
+                for (JsonElement e : json.get("documents").getAsJsonArray())
+                    for (JsonElement e2 : e.getAsJsonObject().get("keyPhrases").getAsJsonArray())
+                        keyPhrases.add(e2.getAsString());
+            }
+
+            return keyPhrases;
         } catch (Exception e) {
-            return e.getMessage();
+            return null;
         }
     }
 
@@ -152,32 +183,22 @@ public class TextAnalyticsController {
         double score = 0;
         for (JsonElement element : jsonArray) {
             JsonObject obj = element.getAsJsonObject();
-            if (obj.get("score").getAsDouble() > score)
+            double obj_score = obj.get("score").getAsDouble();
+            if (obj_score > score) {
+                score = obj_score;
                 language = obj.get("iso6391Name").getAsString();
+            }
         }
 
-        return language;
+        return language + "-" + score;
     }
 
-    public String TextAnalyticsService_Adj(String sentences) {
-        String result = "";
-        ArrayList<String> adjKeyPhrases = getAdjKeyPhrases(sentences);
-        for (int i = 0; i < adjKeyPhrases.size(); i++) {
-            if (i == adjKeyPhrases.size() - 1)
-                result += adjKeyPhrases.get(i);
-            else
-                result += adjKeyPhrases.get(i) + ",";
-        }
-
-        return result;
-    }
-
-    private ArrayList<String> getAdjKeyPhrases(String text) {
-        text = text.toLowerCase();
+    private ArrayList<String> getAdjKeyPhrases(String sentences) {
+        sentences = sentences.toLowerCase();
         ArrayList<Tree> keyPhrases = new ArrayList<>();
         ArrayList<String> result = new ArrayList<>();
 
-        Document doc = new Document(text);
+        Document doc = new Document(sentences);
         for (Sentence sentence : doc.sentences()) {
             Tree tree = sentence.parse();
             getAllLeaf(keyPhrases, tree);
