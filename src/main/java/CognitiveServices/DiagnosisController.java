@@ -1,7 +1,9 @@
 package CognitiveServices;
 
+import Authentication.AuthenticationController;
 import Authentication.UserSyncController;
 import Database.FireBaseDB;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -11,35 +13,40 @@ import edu.stanford.nlp.simple.Sentence;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DiagnosisController {
     private static DiagnosisController instance = null;
-    private static JsonObject diagnosticRules = null;
+    private static Set<Map.Entry<String, JsonElement>> diagnosticRules = null;
 
     public static DiagnosisController getInstance() {
         if (instance == null) {
             instance = new DiagnosisController();
-            diagnosticRules = FireBaseDB.getInstance().getData("DiagnosticRule");
+            diagnosticRules = FireBaseDB.getInstance().getData("DiagnosticRule").entrySet();
         }
         return instance;
     }
 
     public void diagnose(UserSyncController.POST_TYPE postType, ArrayList<JsonObject> posts) throws Exception {
-        // testing data
+        // TODO:testing data
         posts = new ArrayList<>();
-        JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"Testing again \",\"photos\":[\"https://pbs.twimg.com/media/DTL-AEDV4AAPpkW.jpg:large\",\"https://pbs.twimg.com/media/DTL-A7TU0AEbhIb.jpg:large\"]}");
+        //JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"Testing again \",\"photos\":[\"https://pbs.twimg.com/media/DTL-AEDV4AAPpkW.jpg:large\",\"https://pbs.twimg.com/media/DTL-A7TU0AEbhIb.jpg:large\"]}");
+        JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I have a headache. It wakes me up every morning after five hours of sleep. I feel fearful talking with anybody.\"}");
         posts.add(etest.getAsJsonObject());
 
+        ArrayList<DetectionRecord> records = new ArrayList<>();
         // handle each post
         for (JsonObject obj : posts) {
             // get key phrases
             String origin_text = obj.get("text").getAsString();
+            String createAt = obj.get("createAt").getAsString();
             ArrayList<String> keyPhrases = TextAnalyticsController.getInstance().TextAnalyticsService(origin_text);
 
             // get other key phrases if Computer Vision service available
-            ArrayList<String> keyPhrases_CV;
+            ArrayList<String> keyPhrases_CV = null;
             if (obj.has("photos")) {
                 String captions = "";
                 ComputerVisionController cvc = ComputerVisionController.getInstance();
@@ -51,15 +58,64 @@ public class DiagnosisController {
             }
 
             // compare with rules
+            compareRules(origin_text, postType, createAt, records, keyPhrases);
+            if (keyPhrases_CV != null)
+                compareRules(origin_text, postType, createAt, records, keyPhrases_CV);
+        }
 
-            // fit rule => check isSelfSubject + update db
-            // else next
+        if (records.size() > 0) {
+            // check subject of sentence and quoted sentence
+            ArrayList<DetectionRecord> records_copy = (ArrayList<DetectionRecord>) records.clone();
+            for (DetectionRecord record : records_copy) {
+                if (!isSelfSubject(record) || isQuotationSentence(record))
+                    records.remove(record);
+            }
+
+            // write record to DB
+            for (DetectionRecord record : records_copy) {
+                JsonObject obj = new JsonObject();
+                obj.addProperty("uid", record.getUid());
+                obj.addProperty("messageText", record.getOrigin_text());
+                obj.addProperty("keyPhrase", record.getKeyPhrase());
+                obj.addProperty("createAt", record.getCreatedAt());
+                obj.addProperty("DRiD", record.getDiagnosticRule());
+                obj.addProperty("from", record.getFrom());
+                obj.addProperty("postCreateAt", record.getPostCreatedAt());
+
+                FireBaseDB.getInstance().writeData("RuleDetection", obj);
+            }
         }
     }
 
-    public boolean isSelfSubject(String text, String keyPhrase) {
-        text = text.toLowerCase();
-        keyPhrase = keyPhrase.toLowerCase();
+    private void compareRules(String origin_text, UserSyncController.POST_TYPE postType, String postCreateAt, ArrayList<DetectionRecord> records, ArrayList<String> keyPhrases) {
+        for (String keyPhrase : keyPhrases) {
+            for (Map.Entry<String, JsonElement> entry : diagnosticRules) {
+                boolean breaker = false;
+                JsonArray expectedKeyPhrases = entry.getValue().getAsJsonObject().get("expectedKeyPhrases").getAsJsonArray();
+                for (JsonElement expectedKeyPhrase : expectedKeyPhrases) {
+                    if (keyPhrase.equalsIgnoreCase(expectedKeyPhrase.getAsString())) {
+                        String postType_str;
+                        if (postType == UserSyncController.POST_TYPE.TWITTER)
+                            postType_str = "TWITTER";
+                        else
+                            postType_str = "FACEBOOK";
+                        records.add(new DetectionRecord(AuthenticationController.getInstance().getCurrentCSUser().getLocalId(), origin_text, postType_str, postCreateAt, keyPhrase, entry.getKey()));
+                        breaker = true;
+                        break;
+                    } else {
+                        //TODO
+                        // find semantic similarity
+                    }
+                }
+                if (breaker)
+                    break;
+            }
+        }
+    }
+
+    private boolean isSelfSubject(DetectionRecord record) {
+        String text = record.getOrigin_text().toLowerCase();
+        String keyPhrase = record.getKeyPhrase().toLowerCase();
 
         ArrayList<RelationTriple> rts = new ArrayList();
         Document doc = new Document(text);
@@ -85,9 +141,9 @@ public class DiagnosisController {
         return result;
     }
 
-    private boolean isQuotationSentence(String sentence) {
+    private boolean isQuotationSentence(DetectionRecord record) {
         Pattern pattern = Pattern.compile("\"(.*?)\"");
-        Matcher matcher = pattern.matcher(sentence);
+        Matcher matcher = pattern.matcher(record.getOrigin_text());
         if (matcher.find())
             return true;
         else

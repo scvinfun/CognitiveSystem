@@ -112,13 +112,8 @@ public class WebAppInterface {
         return result;
     }
 
-    @RequestMapping("ta")
-    public void ta() throws Exception {
-        TextAnalyticsController.getInstance().TextAnalyticsService("I really enjoy the new XBox One S. It has a clean look, it has 4K/HDR resolution and it is affordable." + "The Grand Hotel is a new hotel in the center of Seattle. It earned 5 stars in my review, and has the classiest decor I've ever seen.");
-    }
-
     @RequestMapping("di")
-    public void test5() throws Exception {
+    public void di() throws Exception {
         AuthenticationController.getInstance().loginWithEmailPassword("sukm2004@gmail.com", "sukm2004");
         DiagnosisController.getInstance().diagnose(UserSyncController.POST_TYPE.TWITTER, null);
     }
