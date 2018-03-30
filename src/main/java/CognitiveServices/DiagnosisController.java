@@ -7,6 +7,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import edu.cmu.lti.lexical_db.ILexicalDatabase;
+import edu.cmu.lti.lexical_db.NictWordNet;
+import edu.cmu.lti.ws4j.impl.WuPalmer;
+import edu.cmu.lti.ws4j.util.WS4JConfiguration;
 import edu.stanford.nlp.ie.util.RelationTriple;
 import edu.stanford.nlp.simple.Document;
 import edu.stanford.nlp.simple.Sentence;
@@ -21,11 +25,13 @@ import java.util.regex.Pattern;
 public class DiagnosisController {
     private static DiagnosisController instance = null;
     private static Set<Map.Entry<String, JsonElement>> diagnosticRules = null;
+    private static ILexicalDatabase wordNetDB = null;
 
     public static DiagnosisController getInstance() {
         if (instance == null) {
             instance = new DiagnosisController();
             diagnosticRules = FireBaseDB.getInstance().getData("DiagnosticRule").entrySet();
+            wordNetDB = new NictWordNet();
         }
         return instance;
     }
@@ -34,7 +40,7 @@ public class DiagnosisController {
         // TODO:testing data
         posts = new ArrayList<>();
         //JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"Testing again \",\"photos\":[\"https://pbs.twimg.com/media/DTL-AEDV4AAPpkW.jpg:large\",\"https://pbs.twimg.com/media/DTL-A7TU0AEbhIb.jpg:large\"]}");
-        JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I have a headache. It wakes me up every morning after five hours of sleep. I feel fearful talking with anybody.\"}");
+        JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I have a migraine. It wakes me up every morning after five hours of sleep. I feel fearful talking with anybody.\"}");
         posts.add(etest.getAsJsonObject());
 
         ArrayList<DetectionRecord> records = new ArrayList<>();
@@ -81,6 +87,7 @@ public class DiagnosisController {
                 obj.addProperty("DRiD", record.getDiagnosticRule());
                 obj.addProperty("from", record.getFrom());
                 obj.addProperty("postCreateAt", record.getPostCreatedAt());
+                obj.addProperty("useSemanticSimilarity", record.isUseSemanticSimilarity());
 
                 FireBaseDB.getInstance().writeData("RuleDetection", obj);
             }
@@ -93,24 +100,33 @@ public class DiagnosisController {
                 boolean breaker = false;
                 JsonArray expectedKeyPhrases = entry.getValue().getAsJsonObject().get("expectedKeyPhrases").getAsJsonArray();
                 for (JsonElement expectedKeyPhrase : expectedKeyPhrases) {
-                    if (keyPhrase.equalsIgnoreCase(expectedKeyPhrase.getAsString())) {
-                        String postType_str;
-                        if (postType == UserSyncController.POST_TYPE.TWITTER)
-                            postType_str = "TWITTER";
-                        else
-                            postType_str = "FACEBOOK";
-                        records.add(new DetectionRecord(AuthenticationController.getInstance().getCurrentCSUser().getLocalId(), origin_text, postType_str, postCreateAt, keyPhrase, entry.getKey()));
+                    String expectedKeyPhrase_str = expectedKeyPhrase.getAsString();
+                    if (keyPhrase.equalsIgnoreCase(expectedKeyPhrase_str)) {
+                        addRecord(records, new DetectionRecord(AuthenticationController.getInstance().getCurrentCSUser().getLocalId(), origin_text, postCreateAt, keyPhrase, entry.getKey(), false), postType);
                         breaker = true;
                         break;
                     } else {
-                        //TODO
                         // find semantic similarity
+                        double sr = findSemanticSimilarity(keyPhrase, expectedKeyPhrase_str);
+                        if (sr > 0.9) {
+                            addRecord(records, new DetectionRecord(AuthenticationController.getInstance().getCurrentCSUser().getLocalId(), origin_text, postCreateAt, keyPhrase, entry.getKey(), true), postType);
+                            breaker = true;
+                            break;
+                        }
                     }
                 }
                 if (breaker)
                     break;
             }
         }
+    }
+
+    private void addRecord(ArrayList<DetectionRecord> source, DetectionRecord record, UserSyncController.POST_TYPE postType) {
+        if (postType == UserSyncController.POST_TYPE.TWITTER)
+            record.setFrom("TWITTER");
+        else
+            record.setFrom("FACEBOOK");
+        source.add(record);
     }
 
     private boolean isSelfSubject(DetectionRecord record) {
@@ -148,5 +164,11 @@ public class DiagnosisController {
             return true;
         else
             return false;
+    }
+
+    private double findSemanticSimilarity(String word1, String word2) {
+        WS4JConfiguration.getInstance().setMFS(true);
+        double score = new WuPalmer(wordNetDB).calcRelatednessOfWords(word1, word2);
+        return score;
     }
 }
