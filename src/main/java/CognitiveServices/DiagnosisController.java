@@ -12,20 +12,19 @@ import edu.cmu.lti.lexical_db.NictWordNet;
 import edu.cmu.lti.ws4j.impl.WuPalmer;
 import edu.cmu.lti.ws4j.util.WS4JConfiguration;
 import edu.stanford.nlp.ie.util.RelationTriple;
+import edu.stanford.nlp.pipeline.CoreDocument;
+import edu.stanford.nlp.pipeline.CoreQuote;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.simple.Document;
 import edu.stanford.nlp.simple.Sentence;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
 
 public class DiagnosisController {
     private static DiagnosisController instance = null;
     private static Set<Map.Entry<String, JsonElement>> diagnosticRules = null;
     private static ILexicalDatabase wordNetDB = null;
+    private static StanfordCoreNLP pipeline = null;
 
     public static DiagnosisController getInstance() {
         if (instance == null) {
@@ -40,8 +39,14 @@ public class DiagnosisController {
         // TODO:testing data
         posts = new ArrayList<>();
         //JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"Testing again \",\"photos\":[\"https://pbs.twimg.com/media/DTL-AEDV4AAPpkW.jpg:large\",\"https://pbs.twimg.com/media/DTL-A7TU0AEbhIb.jpg:large\"]}");
-        JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I have a migraine. It wakes me up every morning after five hours of sleep. I feel fearful talking with anybody.\"}");
+        JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I have a migraine. It wakes me up every morning after five hours of sleep.\"}");
+        JsonElement etest2 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I feel fearful talking with anybody.\"}");
+        JsonElement etest3 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"Mary said that \\\"I got headache\\\".\"}");
+        JsonElement etest4 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I said that \\\"I got headache\\\".\"}");
         posts.add(etest.getAsJsonObject());
+        posts.add(etest2.getAsJsonObject());
+        posts.add(etest3.getAsJsonObject());
+        posts.add(etest4.getAsJsonObject());
 
         ArrayList<DetectionRecord> records = new ArrayList<>();
         // handle each post
@@ -78,7 +83,7 @@ public class DiagnosisController {
             }
 
             // write record to DB
-            for (DetectionRecord record : records_copy) {
+            for (DetectionRecord record : records) {
                 JsonObject obj = new JsonObject();
                 obj.addProperty("uid", record.getUid());
                 obj.addProperty("messageText", record.getOrigin_text());
@@ -147,7 +152,7 @@ public class DiagnosisController {
             return true;
         } else {
             for (RelationTriple r : rts) {
-                if (r.objectGloss().equals(keyPhrase) && r.subjectGloss().equals("i"))
+                if (r.objectGloss().equals(keyPhrase) && r.subjectGloss().equalsIgnoreCase("i"))
                     result = true;
                 if (r.subjectGloss().contains("my") && r.subjectGloss().contains(keyPhrase))
                     result = true;
@@ -158,12 +163,20 @@ public class DiagnosisController {
     }
 
     private boolean isQuotationSentence(DetectionRecord record) {
-        Pattern pattern = Pattern.compile("\"(.*?)\"");
-        Matcher matcher = pattern.matcher(record.getOrigin_text());
-        if (matcher.find())
-            return true;
-        else
-            return false;
+        if (pipeline == null) {
+            Properties props = new Properties();
+            props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, depparse, coref, quote");
+            pipeline = new StanfordCoreNLP(props);
+        }
+        CoreDocument document = new CoreDocument(record.getOrigin_text());
+        pipeline.annotate(document);
+
+        List<CoreQuote> quotes = document.quotes();
+        if (quotes.size() > 0)
+            for (CoreQuote q : quotes)
+                if (q.hasSpeaker && !q.speaker().get().equalsIgnoreCase("I"))
+                    return true;
+        return false;
     }
 
     private double findSemanticSimilarity(String word1, String word2) {
