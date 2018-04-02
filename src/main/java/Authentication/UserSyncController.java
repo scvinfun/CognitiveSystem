@@ -1,5 +1,6 @@
 package Authentication;
 
+import CognitiveServices.DiagnosisController;
 import Database.FireBaseDB;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -32,11 +33,11 @@ public class UserSyncController {
         sdf_display = new SimpleDateFormat("dd/MMM/yyyy - HH:mm", Locale.US);
     }
 
-    private void diagnoseAllData(POST_TYPE postType, ArrayList<JsonObject> tweets) throws ParseException {
+    private void diagnoseAllData(POST_TYPE postType, ArrayList<JsonObject> tweets) throws Exception {
         diagnoseData(postType, tweets, null);
     }
 
-    private void diagnoseData(POST_TYPE postType, ArrayList<JsonObject> posts, String syncTime_str) throws ParseException {
+    private void diagnoseData(POST_TYPE postType, ArrayList<JsonObject> posts, String syncTime_str) throws Exception {
         if (syncTime_str != null) {
             Date syncTime = sdf.parse(syncTime_str);
             ArrayList<JsonObject> posts_copy = new ArrayList<>(posts);
@@ -47,15 +48,13 @@ public class UserSyncController {
             }
 
             posts = posts_copy;
-            System.out.println("sorting");
         }
 
-        //TODO
         // handling diagnostic function
-        System.out.println("diagnosis");
+        DiagnosisController.getInstance().diagnose(postType, posts);
     }
 
-    public boolean syncData_twitter(long twitterId, ArrayList<JsonObject> tweets) throws ParseException {
+    public boolean syncData_twitter(long twitterId, ArrayList<JsonObject> tweets) throws Exception {
         JsonObject userSyncData = FireBaseDB.getInstance().getData(syncPath);
         if (userSyncData == null || !isCurrentSyncDataExisted(userSyncData)) {
             initSyncData_twitter(twitterId, tweets);
@@ -107,7 +106,7 @@ public class UserSyncController {
         }
     }
 
-    public boolean syncData_facebook(long facebookId, ArrayList<JsonObject> posts) throws ParseException {
+    public boolean syncData_facebook(long facebookId, ArrayList<JsonObject> posts) throws Exception {
         JsonObject userSyncData = FireBaseDB.getInstance().getData(syncPath);
         if (userSyncData == null || !isCurrentSyncDataExisted(userSyncData)) {
             initSyncData_facebook(facebookId, posts);

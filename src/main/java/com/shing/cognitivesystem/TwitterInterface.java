@@ -29,7 +29,7 @@ public class TwitterInterface {
     }
 
     @GetMapping
-    public String helloTwitter(Model model) throws ParseException {
+    public String helloTwitter(Model model) throws Exception {
         if (connectionRepository.findPrimaryConnection(Twitter.class) == null) {
             return "redirect:/connect/twitter";
         }

@@ -22,6 +22,21 @@ public class DetectionRecord {
         this.createdAt = new Date().toString();
     }
 
+    private DetectionRecord() {
+        this.uid = "";
+        this.origin_text = "THIS IS DUMMY TEXT.";
+        this.from = "";
+        this.postCreatedAt = "";
+        this.keyPhrase = "";
+        this.diagnosticRule = "";
+        this.useSemanticSimilarity = false;
+        this.createdAt = "";
+    }
+
+    public static DetectionRecord getDummyDetectRecord() {
+        return new DetectionRecord();
+    }
+
     public String getUid() {
         return uid;
     }

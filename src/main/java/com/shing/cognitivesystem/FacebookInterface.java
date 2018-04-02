@@ -29,7 +29,7 @@ public class FacebookInterface {
     }
 
     @GetMapping
-    public String helloFacebook(Model model) throws ParseException {
+    public String helloFacebook(Model model) throws Exception {
         if (connectionRepository.findPrimaryConnection(Facebook.class) == null) {
             return "redirect:/connect/facebook";
         }

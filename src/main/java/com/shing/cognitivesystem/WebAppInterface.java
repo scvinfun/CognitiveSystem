@@ -78,7 +78,7 @@ public class WebAppInterface {
     }
 
     @PostMapping("SyncFacebook")
-    public String SyncFacebook() throws ParseException {
+    public String SyncFacebook() throws Exception {
         AuthenticationController authController = AuthenticationController.getInstance();
         if (!authController.isLogin())
             return null;
@@ -96,7 +96,7 @@ public class WebAppInterface {
     }
 
     @PostMapping("SyncTwitter")
-    public String SyncTwitter() throws ParseException {
+    public String SyncTwitter() throws Exception {
         AuthenticationController authController = AuthenticationController.getInstance();
         if (!authController.isLogin())
             return null;

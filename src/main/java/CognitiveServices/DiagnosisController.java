@@ -37,16 +37,16 @@ public class DiagnosisController {
 
     public void diagnose(UserSyncController.POST_TYPE postType, ArrayList<JsonObject> posts) throws Exception {
         // TODO:testing data
-        posts = new ArrayList<>();
-        JsonElement etest0 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"Testing again \",\"photos\":[\"https://pbs.twimg.com/media/DTL-AEDV4AAPpkW.jpg:large\",\"https://pbs.twimg.com/media/DTL-A7TU0AEbhIb.jpg:large\"]}");
-        JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I have a migraine. It wakes me up every morning after five hours of sleep.\"}");
-        JsonElement etest2 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I feel fearful talking with anybody.\"}");
-        JsonElement etest3 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"Mary said that \\\"I got headache\\\".\"}");
-        JsonElement etest4 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I said that \\\"I got headache\\\".\"}");
-        JsonElement etest5 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am so overwhelmed by co-workers. I took a new job to limit my stress. I used to be a leader and wanted to reduce my stress so I just became a worker bee. Now I feel so pressured because I can't say anything to co-workers who are not working and not acting like they are part of the team.\"}");
-        JsonElement etest6 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am totally uninterested in anything.\"}");
-        JsonElement etest7 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"feel upset....\"}");
-        posts.add(etest0.getAsJsonObject());
+//        posts = new ArrayList<>();
+//        JsonElement etest0 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I'm 16 and my blood pressure is HIGH.\",\"photos\":[\"https://pbs.twimg.com/media/DTL-AEDV4AAPpkW.jpg:large\",\"https://pbs.twimg.com/media/DTL-A7TU0AEbhIb.jpg:large\"]}");
+//        JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I have a migraine. It wakes me up every morning after five hours of sleep.\"}");
+//        JsonElement etest2 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I feel fearful talking with anybody.\"}");
+//        JsonElement etest3 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"Mary said that \\\"I got headache\\\".\"}");
+//        JsonElement etest4 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I said that \\\"I got headache\\\".\"}");
+//        JsonElement etest5 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am so overwhelmed by co-workers. I took a new job to limit my stress. I used to be a leader and wanted to reduce my stress so I just became a worker bee. Now I feel so pressured. because I can't say anything to co-workers who are not working and not acting like they are part of the team.\"}");
+//        JsonElement etest6 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am totally uninterested in anything.\"}");
+//        JsonElement etest7 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"feel upset...\"}");
+//        posts.add(etest0.getAsJsonObject());
 //        posts.add(etest.getAsJsonObject());
 //        posts.add(etest2.getAsJsonObject());
 //        posts.add(etest3.getAsJsonObject());
@@ -81,7 +81,8 @@ public class DiagnosisController {
             }
 
             // compare with rules
-            compareRules(origin_text, postType, createAt, records, keyPhrases);
+            if (keyPhrases != null)
+                compareRules(origin_text, postType, createAt, records, keyPhrases);
             if (keyPhrases_CV != null)
                 compareRules(origin_text, postType, createAt, records, keyPhrases_CV);
         }
@@ -99,7 +100,7 @@ public class DiagnosisController {
                 for (DetectionRecord record : records) {
                     JsonObject obj = new JsonObject();
                     obj.addProperty("uid", record.getUid());
-                    obj.addProperty("messageText", record.getOrigin_text());
+                    obj.addProperty("messageText", record.getOrigin_text().replaceAll("“", "\"").replaceAll("”", "\"").replaceAll("…", "..."));
                     obj.addProperty("keyPhrase", record.getKeyPhrase());
                     obj.addProperty("createAt", record.getCreatedAt());
                     obj.addProperty("DRiD", record.getDiagnosticRule());
@@ -197,5 +198,11 @@ public class DiagnosisController {
         WS4JConfiguration.getInstance().setMFS(true);
         double score = new WuPalmer(wordNetDB).calcRelatednessOfWords(word1, word2);
         return score;
+    }
+
+    public void initStanfordCoreNLPService() {
+        DetectionRecord dummy = DetectionRecord.getDummyDetectRecord();
+        isSelfSubject(dummy);
+        isQuotationSentence(dummy);
     }
 }

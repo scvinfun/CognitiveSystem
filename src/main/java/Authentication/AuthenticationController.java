@@ -31,6 +31,10 @@ public class AuthenticationController {
         }
     }
 
+    public void fake_login() {
+        loginWithEmailPassword("dummy@dummy.com", "dummy");
+    }
+
     public boolean loginWithEmailPassword(String email, String password) {
         JsonObject response_login = null;
         JsonObject response_getUser = null;
