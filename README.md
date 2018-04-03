@@ -1,0 +1,1 @@
+Add "--add-modules java.se.ee" to "VM options" in intellij App start config
