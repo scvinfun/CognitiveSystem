@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 public class ApplicationStartup implements ApplicationListener<ApplicationReadyEvent> {
     @Override
     public void onApplicationEvent(final ApplicationReadyEvent event) {
+        /* option */
         // init data
         DataInitiationController.init(false);
 

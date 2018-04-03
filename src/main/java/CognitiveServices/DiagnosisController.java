@@ -18,42 +18,58 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.simple.Document;
 import edu.stanford.nlp.simple.Sentence;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.*;
+
+import static org.apache.http.HttpHeaders.USER_AGENT;
 
 public class DiagnosisController {
     private static DiagnosisController instance = null;
     private static Set<Map.Entry<String, JsonElement>> diagnosticRules = null;
     private static ILexicalDatabase wordNetDB = null;
     private static StanfordCoreNLP pipeline = null;
+    private static String externalServiceUrl = null;
+    private static String externalServiceFunction = null;
 
     public static DiagnosisController getInstance() {
         if (instance == null) {
             instance = new DiagnosisController();
-            diagnosticRules = FireBaseDB.getInstance().getData("DiagnosticRule").entrySet();
-            wordNetDB = new NictWordNet();
         }
         return instance;
     }
 
+    private DiagnosisController() {
+        diagnosticRules = FireBaseDB.getInstance().getData("DiagnosticRule").entrySet();
+        wordNetDB = new NictWordNet();
+        externalServiceUrl = "http://localhost:8090/";
+        externalServiceFunction = "stanfordcorenlpService";
+    }
+
     public void diagnose(UserSyncController.POST_TYPE postType, ArrayList<JsonObject> posts) throws Exception {
         // TODO:testing data
-//        posts = new ArrayList<>();
-//        JsonElement etest0 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I'm 16 and my blood pressure is HIGH.\",\"photos\":[\"https://pbs.twimg.com/media/DTL-AEDV4AAPpkW.jpg:large\",\"https://pbs.twimg.com/media/DTL-A7TU0AEbhIb.jpg:large\"]}");
-//        JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I have a migraine. It wakes me up every morning after five hours of sleep.\"}");
-//        JsonElement etest2 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I feel fearful talking with anybody.\"}");
-//        JsonElement etest3 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"Mary said that \\\"I got headache\\\".\"}");
-//        JsonElement etest4 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I said that \\\"I got headache\\\".\"}");
-//        JsonElement etest5 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am so overwhelmed by co-workers. I took a new job to limit my stress. I used to be a leader and wanted to reduce my stress so I just became a worker bee. Now I feel so pressured. because I can't say anything to co-workers who are not working and not acting like they are part of the team.\"}");
-//        JsonElement etest6 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am totally uninterested in anything.\"}");
-//        JsonElement etest7 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"feel upset...\"}");
-//        posts.add(etest0.getAsJsonObject());
-//        posts.add(etest.getAsJsonObject());
-//        posts.add(etest2.getAsJsonObject());
-//        posts.add(etest3.getAsJsonObject());
-//        posts.add(etest4.getAsJsonObject());
-//        posts.add(etest5.getAsJsonObject());
-//        posts.add(etest6.getAsJsonObject());
-//        posts.add(etest7.getAsJsonObject());
+        posts = new ArrayList<>();
+        JsonElement etestn = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"this message is used for fake.\"}");
+        JsonElement etest0 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I'm 16 and my blood pressure is HIGH.\",\"photos\":[\"https://pbs.twimg.com/media/DTL-AEDV4AAPpkW.jpg:large\",\"https://pbs.twimg.com/media/DTL-A7TU0AEbhIb.jpg:large\"]}");
+        JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I have a migraine. It wakes me up every morning after five hours of sleep.\"}");
+        JsonElement etest2 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I feel fearful talking with anybody.\"}");
+        JsonElement etest3 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"Mary said that \\\"I got headache\\\".\"}");
+        JsonElement etest4 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I said that \\\"I got headache\\\".\"}");
+        JsonElement etest5 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am so overwhelmed by co-workers. I took a new job to limit my stress. I used to be a leader and wanted to reduce my stress so I just became a worker bee. Now I feel so pressured. because I can't say anything to co-workers who are not working and not acting like they are part of the team.\"}");
+        JsonElement etest6 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am totally uninterested in anything.\"}");
+        JsonElement etest7 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"feel upset...\"}");
+        posts.add(etestn.getAsJsonObject());
+        posts.add(etest0.getAsJsonObject());
+        posts.add(etest.getAsJsonObject());
+        posts.add(etest2.getAsJsonObject());
+        posts.add(etest3.getAsJsonObject());
+        posts.add(etest4.getAsJsonObject());
+        posts.add(etest5.getAsJsonObject());
+        posts.add(etest6.getAsJsonObject());
+        posts.add(etest7.getAsJsonObject());
 
         ArrayList<DetectionRecord> records = new ArrayList<>();
         // handle each post
@@ -91,7 +107,11 @@ public class DiagnosisController {
             // check subject of sentence and quoted sentence
             ArrayList<DetectionRecord> records_copy = (ArrayList<DetectionRecord>) records.clone();
             for (DetectionRecord record : records_copy) {
-                if (!isSelfSubject(record) || isQuotationSentence(record))
+                /* option */
+                // local function
+                //if (!isSelfSubject(record) || isQuotationSentence(record))
+                // external function
+                if (stanfordcorenlpService_call(record))
                     records.remove(record);
             }
 
@@ -191,6 +211,27 @@ public class DiagnosisController {
             for (CoreQuote q : quotes)
                 if (q.hasSpeaker && !q.speaker().get().equalsIgnoreCase("I"))
                     return true;
+        return false;
+    }
+
+    private boolean stanfordcorenlpService_call(DetectionRecord record) {
+        try {
+            URL url = new URL(externalServiceUrl + externalServiceFunction + "?text=" + URLEncoder.encode(record.getOrigin_text(), "UTF-8") + "&keyPhrase=" + URLEncoder.encode(record.getKeyPhrase(), "UTF-8"));
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("POST");
+            con.setRequestProperty("User-Agent", USER_AGENT);
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+            return Boolean.valueOf(response.toString());
+        } catch (Exception e) {
+
+        }
+
         return false;
     }
 
