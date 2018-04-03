@@ -11,6 +11,7 @@ public class DetectionRecord {
     private String diagnosticRule;
     private boolean useSemanticSimilarity;
     private String createdAt;
+    private double srScore;
 
     public DetectionRecord(String uid, String origin_text, String postCreatedAt, String keyPhrase, String diagnosticRule, boolean useSemanticSimilarity) {
         this.uid = uid;
@@ -20,6 +21,17 @@ public class DetectionRecord {
         this.diagnosticRule = diagnosticRule;
         this.useSemanticSimilarity = useSemanticSimilarity;
         this.createdAt = new Date().toString();
+    }
+
+    public DetectionRecord(String uid, String origin_text, String postCreatedAt, String keyPhrase, String diagnosticRule, boolean useSemanticSimilarity, double srScore) {
+        this.uid = uid;
+        this.origin_text = origin_text;
+        this.postCreatedAt = postCreatedAt;
+        this.keyPhrase = keyPhrase;
+        this.diagnosticRule = diagnosticRule;
+        this.useSemanticSimilarity = useSemanticSimilarity;
+        this.createdAt = new Date().toString();
+        this.srScore = srScore;
     }
 
     private DetectionRecord() {
@@ -99,5 +111,13 @@ public class DetectionRecord {
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public double getSrScore() {
+        return srScore;
+    }
+
+    public void setSrScore(double srScore) {
+        this.srScore = srScore;
     }
 }

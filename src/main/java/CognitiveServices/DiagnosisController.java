@@ -126,7 +126,11 @@ public class DiagnosisController {
                     obj.addProperty("DRiD", record.getDiagnosticRule());
                     obj.addProperty("from", record.getFrom());
                     obj.addProperty("postCreateAt", record.getPostCreatedAt());
-                    obj.addProperty("useSemanticSimilarity", record.isUseSemanticSimilarity());
+
+                    boolean useSemanticSimilarity = record.isUseSemanticSimilarity();
+                    obj.addProperty("useSemanticSimilarity", useSemanticSimilarity);
+                    if (useSemanticSimilarity)
+                        obj.addProperty("semanticSimilarityScore", record.getSrScore());
 
                     FireBaseDB.getInstance().writeData("RuleDetection", obj);
                 }
@@ -147,9 +151,9 @@ public class DiagnosisController {
                         break;
                     } else {
                         // find semantic similarity
-                        double sr = findSemanticSimilarity(keyPhrase, expectedKeyPhrase_str);
-                        if (sr > 0.9) {
-                            addRecord(records, new DetectionRecord(AuthenticationController.getInstance().getCurrentCSUser().getLocalId(), origin_text, postCreateAt, keyPhrase, entry.getKey(), true), postType);
+                        double srScore = findSemanticSimilarity(keyPhrase, expectedKeyPhrase_str);
+                        if (srScore > 0.9) {
+                            addRecord(records, new DetectionRecord(AuthenticationController.getInstance().getCurrentCSUser().getLocalId(), origin_text, postCreateAt, keyPhrase, entry.getKey(), true, srScore), postType);
                             breaker = true;
                             break;
                         }
