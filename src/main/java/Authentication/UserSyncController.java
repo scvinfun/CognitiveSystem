@@ -33,11 +33,11 @@ public class UserSyncController {
         sdf_display = new SimpleDateFormat("dd/MMM/yyyy - HH:mm", Locale.US);
     }
 
-    private void diagnoseAllData(POST_TYPE postType, ArrayList<JsonObject> tweets) throws Exception {
-        diagnoseData(postType, tweets, null);
+    private int diagnoseAllData(POST_TYPE postType, ArrayList<JsonObject> posts) throws Exception {
+        return diagnoseData(postType, posts, null);
     }
 
-    private void diagnoseData(POST_TYPE postType, ArrayList<JsonObject> posts, String syncTime_str) throws Exception {
+    private int diagnoseData(POST_TYPE postType, ArrayList<JsonObject> posts, String syncTime_str) throws Exception {
         if (syncTime_str != null) {
             Date syncTime = sdf.parse(syncTime_str);
             ArrayList<JsonObject> posts_copy = new ArrayList<>(posts);
@@ -51,28 +51,32 @@ public class UserSyncController {
         }
 
         // handling diagnostic function
-        DiagnosisController.getInstance().diagnose(postType, posts);
+        return DiagnosisController.getInstance().diagnose(postType, posts);
     }
 
-    public boolean syncData_twitter(long twitterId, ArrayList<JsonObject> tweets) throws Exception {
+    public JsonObject syncData_twitter(long twitterId, ArrayList<JsonObject> tweets) throws Exception {
+        JsonObject result = new JsonObject();
+
         JsonObject userSyncData = FireBaseDB.getInstance().getData(syncPath);
         if (userSyncData == null || !isCurrentSyncDataExisted(userSyncData)) {
             initSyncData_twitter(twitterId, tweets);
-            diagnoseAllData(POST_TYPE.TWITTER, tweets);
-            return true;
+            result.addProperty("detectedNum", diagnoseAllData(POST_TYPE.TWITTER, tweets));
+            result.addProperty("successSync", true);
         } else {
             JsonObject independentUserSyncData = extractIndependentUserSyncData(userSyncData);
             if (isSameTwitterAccount(twitterId, independentUserSyncData) && !isSameSyncTime(POST_TYPE.TWITTER, tweets, independentUserSyncData)) {
                 modifySyncData_twitter(twitterId, tweets, independentUserSyncData);
                 if (independentUserSyncData.has("twitterSyncTime"))
-                    diagnoseData(POST_TYPE.TWITTER, tweets, independentUserSyncData.get("twitterSyncTime").getAsString());
+                    result.addProperty("detectedNum", diagnoseData(POST_TYPE.TWITTER, tweets, independentUserSyncData.get("twitterSyncTime").getAsString()));
                 else
-                    diagnoseAllData(POST_TYPE.TWITTER, tweets);
-                return true;
+                    result.addProperty("detectedNum", diagnoseAllData(POST_TYPE.TWITTER, tweets));
+                result.addProperty("successSync", true);
             } else {
-                return false;
+                result.addProperty("successSync", false);
             }
         }
+
+        return result;
     }
 
     private void initSyncData_twitter(long twitterId, ArrayList<JsonObject> tweets) {
@@ -106,25 +110,28 @@ public class UserSyncController {
         }
     }
 
-    public boolean syncData_facebook(long facebookId, ArrayList<JsonObject> posts) throws Exception {
+    public JsonObject syncData_facebook(long facebookId, ArrayList<JsonObject> posts) throws Exception {
+        JsonObject result = new JsonObject();
+
         JsonObject userSyncData = FireBaseDB.getInstance().getData(syncPath);
         if (userSyncData == null || !isCurrentSyncDataExisted(userSyncData)) {
             initSyncData_facebook(facebookId, posts);
-            diagnoseAllData(POST_TYPE.FACEBOOK, posts);
-            return true;
+            result.addProperty("detectedNum", diagnoseAllData(POST_TYPE.FACEBOOK, posts));
+            result.addProperty("successSync", true);
         } else {
             JsonObject independentUserSyncData = extractIndependentUserSyncData(userSyncData);
             if (isSameFacebookAccount(facebookId, independentUserSyncData) && !isSameSyncTime(POST_TYPE.FACEBOOK, posts, independentUserSyncData)) {
                 modifySyncData_facebook(facebookId, posts, independentUserSyncData);
                 if (independentUserSyncData.has("facebookSyncTime"))
-                    diagnoseData(POST_TYPE.FACEBOOK, posts, independentUserSyncData.get("facebookSyncTime").getAsString());
+                    result.addProperty("detectedNum", diagnoseData(POST_TYPE.FACEBOOK, posts, independentUserSyncData.get("facebookSyncTime").getAsString()));
                 else
-                    diagnoseAllData(POST_TYPE.FACEBOOK, posts);
-                return true;
+                    result.addProperty("detectedNum", diagnoseAllData(POST_TYPE.FACEBOOK, posts));
+                result.addProperty("successSync", true);
             } else {
-                return false;
+                result.addProperty("successSync", false);
             }
         }
+        return result;
     }
 
     private void initSyncData_facebook(long facebookId, ArrayList<JsonObject> posts) {

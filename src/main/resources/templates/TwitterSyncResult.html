@@ -2,11 +2,20 @@
 <title>Cognitive System</title>
 <script>
     window.onload = function () {
-        var result = document.getElementById("result").innerHTML;
-        if (result == "true")
+        var result_successSync = document.getElementById("result_successSync").innerHTML;
+        if (result_successSync == "true")
             document.getElementById("title").innerHTML = "Synchronization is Finished"
         else
             document.getElementById("title").innerHTML = "Failed to synchronize - Incorrect Twitter Account"
+
+        var message = document.getElementById("message");
+        var result_detectedNum = document.getElementById("result_detectedNum").innerHTML;
+        if (result_detectedNum == "0")
+            message.style.display = "none";
+        else if (result_detectedNum == "1")
+            message.innerHTML = result_detectedNum + " record is detected";
+        else
+            message.innerHTML = result_detectedNum + " records are detected";
     };
 </script>
 <style>
@@ -23,7 +32,7 @@
         display: none;
     }
 
-    h3 {
+    h3, h4 {
         color: white;
         text-align: center;
         background-color: rgba(0, 0, 0, 0.3);
@@ -43,8 +52,10 @@
     }
 </style>
 <body>
-<span id="result" class="hidden" th:text="${successSync}"></span>
+<span id="result_successSync" class="hidden" th:text="${successSync}"></span>
+<span id="result_detectedNum" class="hidden" th:text="${detectedNum}"></span>
 <h3 id="title"></h3>
+<h4 id="message"></h4>
 <div>
     <input class="button" type="button" value="Close" onclick="window.close()"/>
 </div>

@@ -14,7 +14,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 
 @Controller
@@ -38,8 +37,10 @@ public class FacebookInterface {
         PagedList<Post> feed = facebook.feedOperations().getFeed();
         ArrayList<JsonObject> facebookDetail = FacebookController.getInstance().getFacebookDetail(feed);
 
-        boolean success = UserSyncController.getInstance().syncData_facebook(Long.parseLong(currentFacebookUser.getId()), facebookDetail);
-        model.addAttribute("successSync", success + "");
+        JsonObject obj = UserSyncController.getInstance().syncData_facebook(Long.parseLong(currentFacebookUser.getId()), facebookDetail);
+        model.addAttribute("successSync", obj.get("successSync").getAsString());
+        if (obj.has("detectedNum"))
+            model.addAttribute("detectedNum", obj.get("detectedNum").getAsString());
 
         return "FacebookSyncResult";
     }

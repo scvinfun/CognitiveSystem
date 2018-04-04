@@ -87,10 +87,7 @@ public class WebAppInterface {
         PagedList<Post> feed = SocialStaticData.facebook.feedOperations().getFeed();
         ArrayList<JsonObject> facebookDetail = FacebookController.getInstance().getFacebookDetail(feed);
 
-        boolean success = UserSyncController.getInstance().syncData_facebook(Long.parseLong(currentFacebookUser.getId()), facebookDetail);
-
-        JsonObject obj = new JsonObject();
-        obj.addProperty("successSync", success);
+        JsonObject obj = UserSyncController.getInstance().syncData_facebook(Long.parseLong(currentFacebookUser.getId()), facebookDetail);
 
         return obj.toString();
     }
@@ -105,10 +102,7 @@ public class WebAppInterface {
         List<Tweet> list = SocialStaticData.twitter.timelineOperations().getUserTimeline();
         ArrayList<JsonObject> tweets = TwitterController.getInstance().getTweetDetail(list);
 
-        boolean success = UserSyncController.getInstance().syncData_twitter(twitterProfile.getId(), tweets);
-
-        JsonObject obj = new JsonObject();
-        obj.addProperty("successSync", success);
+        JsonObject obj = UserSyncController.getInstance().syncData_twitter(twitterProfile.getId(), tweets);
 
         return obj.toString();
     }

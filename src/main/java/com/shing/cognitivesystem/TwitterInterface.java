@@ -13,7 +13,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,8 +37,10 @@ public class TwitterInterface {
         List<Tweet> list = twitter.timelineOperations().getUserTimeline();
         ArrayList<JsonObject> tweets = TwitterController.getInstance().getTweetDetail(list);
 
-        boolean success = UserSyncController.getInstance().syncData_twitter(twitterProfile.getId(), tweets);
-        model.addAttribute("successSync", success + "");
+        JsonObject obj = UserSyncController.getInstance().syncData_twitter(twitterProfile.getId(), tweets);
+        model.addAttribute("successSync", obj.get("successSync").getAsString());
+        if (obj.has("detectedNum"))
+            model.addAttribute("detectedNum", obj.get("detectedNum").getAsString());
 
         return "TwitterSyncResult";
     }

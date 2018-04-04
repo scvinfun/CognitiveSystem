@@ -6,7 +6,6 @@ import Database.FireBaseDB;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import edu.cmu.lti.lexical_db.ILexicalDatabase;
 import edu.cmu.lti.lexical_db.NictWordNet;
 import edu.cmu.lti.ws4j.impl.WuPalmer;
@@ -49,27 +48,27 @@ public class DiagnosisController {
         externalServiceFunction = "stanfordcorenlpService";
     }
 
-    public void diagnose(UserSyncController.POST_TYPE postType, ArrayList<JsonObject> posts) throws Exception {
+    public int diagnose(UserSyncController.POST_TYPE postType, ArrayList<JsonObject> posts) throws Exception {
         // TODO:testing data
-        posts = new ArrayList<>();
-        JsonElement etestn = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"this message is used for fake.\"}");
-        JsonElement etest0 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I'm 16 and my blood pressure is HIGH.\",\"photos\":[\"https://pbs.twimg.com/media/DTL-AEDV4AAPpkW.jpg:large\",\"https://pbs.twimg.com/media/DTL-A7TU0AEbhIb.jpg:large\"]}");
-        JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I have a migraine. It wakes me up every morning after five hours of sleep.\"}");
-        JsonElement etest2 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I feel fearful talking with anybody.\"}");
-        JsonElement etest3 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"Mary said that \\\"I got headache\\\".\"}");
-        JsonElement etest4 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I said that \\\"I got headache\\\".\"}");
-        JsonElement etest5 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am so overwhelmed by co-workers. I took a new job to limit my stress. I used to be a leader and wanted to reduce my stress so I just became a worker bee. Now I feel so pressured. because I can't say anything to co-workers who are not working and not acting like they are part of the team.\"}");
-        JsonElement etest6 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am totally uninterested in anything.\"}");
-        JsonElement etest7 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"feel upset...\"}");
-        posts.add(etestn.getAsJsonObject());
-        posts.add(etest0.getAsJsonObject());
-        posts.add(etest.getAsJsonObject());
-        posts.add(etest2.getAsJsonObject());
-        posts.add(etest3.getAsJsonObject());
-        posts.add(etest4.getAsJsonObject());
-        posts.add(etest5.getAsJsonObject());
-        posts.add(etest6.getAsJsonObject());
-        posts.add(etest7.getAsJsonObject());
+//        posts = new ArrayList<>();
+//        JsonElement etestn = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"this message is used for fake.\"}");
+//        JsonElement etest0 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I'm 16 and my blood pressure is HIGH.\",\"photos\":[\"https://pbs.twimg.com/media/DTL-AEDV4AAPpkW.jpg:large\",\"https://pbs.twimg.com/media/DTL-A7TU0AEbhIb.jpg:large\"]}");
+//        JsonElement etest = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I have a migraine. It wakes me up every morning after five hours of sleep.\"}");
+//        JsonElement etest2 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I feel fearful talking with anybody.\"}");
+//        JsonElement etest3 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"Mary said that \\\"I got headache\\\".\"}");
+//        JsonElement etest4 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I said that \\\"I got headache\\\".\"}");
+//        JsonElement etest5 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am so overwhelmed by co-workers. I took a new job to limit my stress. I used to be a leader and wanted to reduce my stress so I just became a worker bee. Now I feel so pressured. because I can't say anything to co-workers who are not working and not acting like they are part of the team.\"}");
+//        JsonElement etest6 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am totally uninterested in anything.\"}");
+//        JsonElement etest7 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"feel upset...\"}");
+//        posts.add(etestn.getAsJsonObject());
+//        posts.add(etest0.getAsJsonObject());
+//        posts.add(etest.getAsJsonObject());
+//        posts.add(etest2.getAsJsonObject());
+//        posts.add(etest3.getAsJsonObject());
+//        posts.add(etest4.getAsJsonObject());
+//        posts.add(etest5.getAsJsonObject());
+//        posts.add(etest6.getAsJsonObject());
+//        posts.add(etest7.getAsJsonObject());
 
         ArrayList<DetectionRecord> records = new ArrayList<>();
         // handle each post
@@ -86,8 +85,14 @@ public class DiagnosisController {
                 String captions_toText = "";
                 ComputerVisionController cvc = ComputerVisionController.getInstance();
 
-                for (JsonElement e : obj.get("photos").getAsJsonArray()) {
-                    captions += cvc.ComputerVisionService(e.getAsString()) + ". ";
+                JsonElement photos = obj.get("photos");
+                if (photos.isJsonArray()) {
+                    for (JsonElement e : obj.get("photos").getAsJsonArray()) {
+                        captions += cvc.ComputerVisionService(e.getAsString()) + ". ";
+                        captions_toText += "[photo_description:" + captions + "]";
+                    }
+                } else {
+                    captions += cvc.ComputerVisionService(photos.getAsString()) + ". ";
                     captions_toText += "[photo_description:" + captions + "]";
                 }
                 keyPhrases_CV = TextAnalyticsController.getInstance().TextAnalyticsService(captions);
@@ -136,6 +141,8 @@ public class DiagnosisController {
                 }
             }
         }
+
+        return records.size();
     }
 
     private void compareRules(String origin_text, UserSyncController.POST_TYPE postType, String postCreateAt, ArrayList<DetectionRecord> records, ArrayList<String> keyPhrases) {
