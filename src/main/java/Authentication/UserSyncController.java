@@ -64,19 +64,19 @@ public class UserSyncController {
             result.addProperty("successSync", true);
         } else {
             JsonObject independentUserSyncData = extractIndependentUserSyncData(userSyncData);
+            boolean isSameTwitterAccount = isSameTwitterAccount(twitterId, independentUserSyncData);
             boolean isSameSyncTime = isSameSyncTime(POST_TYPE.TWITTER, tweets, independentUserSyncData);
-            if (isSameTwitterAccount(twitterId, independentUserSyncData) && !isSameSyncTime) {
+            if (isSameTwitterAccount && !isSameSyncTime) {
                 modifySyncData_twitter(twitterId, tweets, independentUserSyncData);
                 if (independentUserSyncData.has("twitterSyncTime"))
                     result.addProperty("detectedNum", diagnoseData(POST_TYPE.TWITTER, tweets, independentUserSyncData.get("twitterSyncTime").getAsString()));
                 else
                     result.addProperty("detectedNum", diagnoseAllData(POST_TYPE.TWITTER, tweets));
                 result.addProperty("successSync", true);
+            } else if (isSameTwitterAccount && isSameSyncTime) {
+                result.addProperty("successSync", true);
             } else {
-                if (isSameSyncTime)
-                    result.addProperty("successSync", true);
-                else
-                    result.addProperty("successSync", false);
+                result.addProperty("successSync", false);
             }
         }
 
@@ -124,19 +124,19 @@ public class UserSyncController {
             result.addProperty("successSync", true);
         } else {
             JsonObject independentUserSyncData = extractIndependentUserSyncData(userSyncData);
+            boolean isSameFacebookAccount = isSameFacebookAccount(facebookId, independentUserSyncData);
             boolean isSameSyncTime = isSameSyncTime(POST_TYPE.FACEBOOK, posts, independentUserSyncData);
-            if (isSameFacebookAccount(facebookId, independentUserSyncData) && !isSameSyncTime) {
+            if (isSameFacebookAccount && !isSameSyncTime) {
                 modifySyncData_facebook(facebookId, posts, independentUserSyncData);
                 if (independentUserSyncData.has("facebookSyncTime"))
                     result.addProperty("detectedNum", diagnoseData(POST_TYPE.FACEBOOK, posts, independentUserSyncData.get("facebookSyncTime").getAsString()));
                 else
                     result.addProperty("detectedNum", diagnoseAllData(POST_TYPE.FACEBOOK, posts));
                 result.addProperty("successSync", true);
+            } else if (isSameFacebookAccount && isSameSyncTime) {
+                result.addProperty("successSync", true);
             } else {
-                if (isSameSyncTime)
-                    result.addProperty("successSync", true);
-                else
-                    result.addProperty("successSync", false);
+                result.addProperty("successSync", false);
             }
         }
         return result;
