@@ -78,33 +78,49 @@ public class WebAppInterface {
     }
 
     @PostMapping("SyncFacebook")
-    public String SyncFacebook() throws Exception {
+    public String SyncFacebook() {
         AuthenticationController authController = AuthenticationController.getInstance();
         if (!authController.isLogin())
             return null;
 
-        User currentFacebookUser = SocialStaticData.facebook.fetchObject("me", User.class, "id", "about", "age_range", "birthday", "context", "cover", "currency", "devices", "education", "email", "favorite_athletes", "favorite_teams", "first_name", "gender", "hometown", "inspirational_people", "installed", "install_type", "is_verified", "languages", "last_name", "link", "locale", "location", "meeting_for", "middle_name", "name", "name_format", "political", "quotes", "payment_pricepoints", "relationship_status", "religion", "security_settings", "significant_other", "sports", "test_group", "timezone", "third_party_id", "updated_time", "verified", "video_upload_limits", "viewer_can_send_gift", "website", "work");
-        PagedList<Post> feed = SocialStaticData.facebook.feedOperations().getFeed();
-        ArrayList<JsonObject> facebookDetail = FacebookController.getInstance().getFacebookDetail(feed);
+        try {
+            User currentFacebookUser = SocialStaticData.facebook.fetchObject("me", User.class, "id", "about", "age_range", "birthday", "context", "cover", "currency", "devices", "education", "email", "favorite_athletes", "favorite_teams", "first_name", "gender", "hometown", "inspirational_people", "installed", "install_type", "is_verified", "languages", "last_name", "link", "locale", "location", "meeting_for", "middle_name", "name", "name_format", "political", "quotes", "payment_pricepoints", "relationship_status", "religion", "security_settings", "significant_other", "sports", "test_group", "timezone", "third_party_id", "updated_time", "verified", "video_upload_limits", "viewer_can_send_gift", "website", "work");
+            PagedList<Post> feed = SocialStaticData.facebook.feedOperations().getFeed();
+            ArrayList<JsonObject> facebookDetail = FacebookController.getInstance().getFacebookDetail(feed);
 
-        JsonObject obj = UserSyncController.getInstance().syncData_facebook(Long.parseLong(currentFacebookUser.getId()), facebookDetail);
+            JsonObject obj = UserSyncController.getInstance().syncData_facebook(Long.parseLong(currentFacebookUser.getId()), facebookDetail);
+            obj.addProperty("connected", true);
 
-        return obj.toString();
+            return obj.toString();
+        } catch (Exception e) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("connected", false);
+
+            return obj.toString();
+        }
     }
 
     @PostMapping("SyncTwitter")
-    public String SyncTwitter() throws Exception {
+    public String SyncTwitter() {
         AuthenticationController authController = AuthenticationController.getInstance();
         if (!authController.isLogin())
             return null;
 
-        TwitterProfile twitterProfile = SocialStaticData.twitter.userOperations().getUserProfile();
-        List<Tweet> list = SocialStaticData.twitter.timelineOperations().getUserTimeline();
-        ArrayList<JsonObject> tweets = TwitterController.getInstance().getTweetDetail(list);
+        try {
+            TwitterProfile twitterProfile = SocialStaticData.twitter.userOperations().getUserProfile();
+            List<Tweet> list = SocialStaticData.twitter.timelineOperations().getUserTimeline();
+            ArrayList<JsonObject> tweets = TwitterController.getInstance().getTweetDetail(list);
 
-        JsonObject obj = UserSyncController.getInstance().syncData_twitter(twitterProfile.getId(), tweets);
+            JsonObject obj = UserSyncController.getInstance().syncData_twitter(twitterProfile.getId(), tweets);
+            obj.addProperty("connected", true);
 
-        return obj.toString();
+            return obj.toString();
+        } catch (Exception e) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("connected", false);
+
+            return obj.toString();
+        }
     }
 
     @GetMapping("GetDisorders")
