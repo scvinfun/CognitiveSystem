@@ -4,8 +4,10 @@ import Authentication.AuthenticationController;
 import CognitiveServices.DiagnosisController;
 
 public class DataInitiationController {
-    public static void init(boolean decision) {
-        if (decision) {
+    private static boolean active = false;
+
+    public static void init() {
+        if (DataInitiationController.isActive()) {
             System.out.println("==========  START  ==========");
             AuthenticationController ac = AuthenticationController.getInstance();
             ac.fake_login();
@@ -16,5 +18,13 @@ public class DataInitiationController {
             System.out.println("");
             System.out.println("==========  END  ==========");
         }
+    }
+
+    public static void setActive(boolean active) {
+        DataInitiationController.active = active;
+    }
+
+    public static boolean isActive() {
+        return active;
     }
 }

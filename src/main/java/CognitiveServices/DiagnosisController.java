@@ -6,6 +6,7 @@ import Database.FireBaseDB;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.shing.cognitivesystem.DataInitiationController;
 import edu.cmu.lti.lexical_db.ILexicalDatabase;
 import edu.cmu.lti.lexical_db.NictWordNet;
 import edu.cmu.lti.ws4j.impl.WuPalmer;
@@ -112,12 +113,15 @@ public class DiagnosisController {
             // check subject of sentence and quoted sentence
             ArrayList<DetectionRecord> records_copy = (ArrayList<DetectionRecord>) records.clone();
             for (DetectionRecord record : records_copy) {
-                /* option */
-                // local function
-                //if (!isSelfSubject(record) || isQuotationSentence(record))
-                // external function
-                if (stanfordcorenlpService_call(record))
-                    records.remove(record);
+                if (DataInitiationController.isActive()) {
+                    // local function
+                    if (!isSelfSubject(record) || isQuotationSentence(record))
+                        records.remove(record);
+                } else {
+                    // external function
+                    if (stanfordcorenlpService_call(record))
+                        records.remove(record);
+                }
             }
 
             // write record to DB
