@@ -1,6 +1,7 @@
 package com.shing.cognitivesystem;
 
 import Authentication.AuthenticationController;
+import Authentication.UserSymptomController;
 import Authentication.UserSyncController;
 import CognitiveServices.DiagnosisController;
 import Database.FireBaseDB;
@@ -73,6 +74,7 @@ public class WebAppInterface {
         JsonObject obj = new JsonObject();
         obj.addProperty("email", authController.getCurrentCSUser().getEmail());
         obj.add("userSyncData", UserSyncController.getInstance().getUserSyncData());
+        obj.addProperty("hasDetectedRecord", UserSymptomController.getInstance().hasDetectedRecord(authController.getCurrentCSUser().getLocalId()));
 
         return obj.toString();
     }
@@ -121,6 +123,15 @@ public class WebAppInterface {
 
             return obj.toString();
         }
+    }
+
+    @GetMapping("GetUserSymptom")
+    public String GetUserSymptom() {
+        AuthenticationController authController = AuthenticationController.getInstance();
+        if (!authController.isLogin())
+            return null;
+
+        return UserSymptomController.getInstance().getUserSymptomData(authController.getCurrentCSUser().getLocalId());
     }
 
     @GetMapping("GetDisorders")

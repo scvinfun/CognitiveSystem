@@ -12,7 +12,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class FireBaseAuth {
-    private static final String BASE_URL = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/";
+    private final String BASE_URL = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/";
     public static final String OPERATION_SIGNUP = "signupNewUser";
     public static final String OPERATION_SIGNIN = "verifyPassword";
     public static final String OPERATION_GETUSER = "getAccountInfo";

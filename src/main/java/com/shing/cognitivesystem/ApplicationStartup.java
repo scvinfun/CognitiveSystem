@@ -10,8 +10,12 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
     public void onApplicationEvent(final ApplicationReadyEvent event) {
         /* option */
         // init data
-        DataInitiationController.setActive(false);
+        DataInitiationController.setInit_active(false);
         DataInitiationController.init();
+
+        // auto login
+        DataInitiationController.setAutoLogin_active(true);
+        DataInitiationController.autoLogin();
 
         return;
     }

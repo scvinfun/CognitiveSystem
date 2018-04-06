@@ -21,7 +21,7 @@ import static org.apache.http.HttpHeaders.USER_AGENT;
 
 public class FireBaseDB {
     private static FireBaseDB instance = null;
-    private static String BASE_URL = null;
+    private String BASE_URL = null;
     private String projectId;
 
     public static FireBaseDB getInstance() {

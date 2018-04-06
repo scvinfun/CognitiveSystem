@@ -29,11 +29,11 @@ import static org.apache.http.HttpHeaders.USER_AGENT;
 
 public class DiagnosisController {
     private static DiagnosisController instance = null;
-    private static Set<Map.Entry<String, JsonElement>> diagnosticRules = null;
-    private static ILexicalDatabase wordNetDB = null;
-    private static StanfordCoreNLP pipeline = null;
-    private static String externalServiceUrl = null;
-    private static String externalServiceFunction = null;
+    private Set<Map.Entry<String, JsonElement>> diagnosticRules = null;
+    private ILexicalDatabase wordNetDB = null;
+    private StanfordCoreNLP pipeline = null;
+    private String externalServiceUrl = null;
+    private String externalServiceFunction = null;
 
     public static DiagnosisController getInstance() {
         if (instance == null) {
@@ -113,7 +113,7 @@ public class DiagnosisController {
             // check subject of sentence and quoted sentence
             ArrayList<DetectionRecord> records_copy = (ArrayList<DetectionRecord>) records.clone();
             for (DetectionRecord record : records_copy) {
-                if (DataInitiationController.isActive()) {
+                if (DataInitiationController.isInit_active()) {
                     // local function
                     if (!isSelfSubject(record) || isQuotationSentence(record))
                         records.remove(record);
@@ -132,7 +132,7 @@ public class DiagnosisController {
                     obj.addProperty("messageText", record.getOrigin_text().replaceAll("“", "\"").replaceAll("”", "\"").replaceAll("…", "..."));
                     obj.addProperty("keyPhrase", record.getKeyPhrase());
                     obj.addProperty("createAt", record.getCreatedAt());
-                    obj.addProperty("DRiD", record.getDiagnosticRule());
+                    obj.addProperty("DRId", record.getDiagnosticRule());
                     obj.addProperty("from", record.getFrom());
                     obj.addProperty("postCreateAt", record.getPostCreatedAt());
 

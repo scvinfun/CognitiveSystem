@@ -10,7 +10,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Encryptor {
     private static Encryptor instance = null;
-    private static String key, initVector;
+    private String key;
+    private String initVector;
 
     public static Encryptor getInstance() {
         if (instance == null) {
