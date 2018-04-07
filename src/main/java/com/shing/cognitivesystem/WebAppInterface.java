@@ -125,8 +125,17 @@ public class WebAppInterface {
         }
     }
 
+    @GetMapping("GetSymptomCount")
+    public String GetSymptomCount() {
+        AuthenticationController authController = AuthenticationController.getInstance();
+        if (!authController.isLogin())
+            return null;
+
+        return UserSymptomController.getInstance().getSymptomCount();
+    }
+
     @GetMapping("GetUserSymptom")
-    public String GetUserSymptom() {
+    public String GetUserSymptom() throws ParseException {
         AuthenticationController authController = AuthenticationController.getInstance();
         if (!authController.isLogin())
             return null;

@@ -90,11 +90,11 @@ public class DiagnosisController {
                 if (photos.isJsonArray()) {
                     for (JsonElement e : obj.get("photos").getAsJsonArray()) {
                         captions += cvc.ComputerVisionService(e.getAsString()) + ". ";
-                        captions_toText += "[photo_description:" + captions + "]";
+                        captions_toText += "[photo_description: " + captions + "]";
                     }
                 } else {
                     captions += cvc.ComputerVisionService(photos.getAsString()) + ". ";
-                    captions_toText += "[photo_description:" + captions + "]";
+                    captions_toText += "[photo_description: " + captions + "]";
                 }
                 keyPhrases_CV = TextAnalyticsController.getInstance().TextAnalyticsService(captions);
 
@@ -138,8 +138,10 @@ public class DiagnosisController {
 
                     boolean useSemanticSimilarity = record.isUseSemanticSimilarity();
                     obj.addProperty("useSemanticSimilarity", useSemanticSimilarity);
-                    if (useSemanticSimilarity)
+                    if (useSemanticSimilarity) {
                         obj.addProperty("semanticSimilarityScore", record.getSrScore());
+                        obj.addProperty("semanticSimilarityPair", record.getSrPair());
+                    }
 
                     FireBaseDB.getInstance().writeData("RuleDetection", obj);
                 }
@@ -164,7 +166,7 @@ public class DiagnosisController {
                         // find semantic similarity
                         double srScore = findSemanticSimilarity(keyPhrase, expectedKeyPhrase_str);
                         if (srScore > 0.9) {
-                            addRecord(records, new DetectionRecord(AuthenticationController.getInstance().getCurrentCSUser().getLocalId(), origin_text, postCreateAt, keyPhrase, entry.getKey(), true, srScore), postType);
+                            addRecord(records, new DetectionRecord(AuthenticationController.getInstance().getCurrentCSUser().getLocalId(), origin_text, postCreateAt, keyPhrase, entry.getKey(), true, srScore, keyPhrase + " - " + expectedKeyPhrase_str), postType);
                             breaker = true;
                             break;
                         }

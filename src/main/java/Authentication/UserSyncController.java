@@ -1,13 +1,16 @@
 package Authentication;
 
 import CognitiveServices.DiagnosisController;
+import Common.CS_DateFormatter;
 import Database.FireBaseDB;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Map;
+import java.util.Set;
 
 public class UserSyncController {
     public enum POST_TYPE {
@@ -17,8 +20,6 @@ public class UserSyncController {
 
     private static UserSyncController instance = null;
     private String syncPath = null;
-    private SimpleDateFormat sdf = null;
-    private SimpleDateFormat sdf_display = null;
 
     public static UserSyncController getInstance() {
         if (instance == null) {
@@ -29,8 +30,6 @@ public class UserSyncController {
 
     private UserSyncController() {
         syncPath = "UserSyncData";
-        sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
-        sdf_display = new SimpleDateFormat("dd/MMM/yyyy - HH:mm", Locale.US);
     }
 
     private int diagnoseAllData(POST_TYPE postType, ArrayList<JsonObject> posts) throws Exception {
@@ -39,10 +38,10 @@ public class UserSyncController {
 
     private int diagnoseData(POST_TYPE postType, ArrayList<JsonObject> posts, String syncTime_str) throws Exception {
         if (syncTime_str != null) {
-            Date syncTime = sdf.parse(syncTime_str);
+            Date syncTime = CS_DateFormatter.FULL_FORMAT.parse(syncTime_str);
             ArrayList<JsonObject> posts_copy = new ArrayList<>(posts);
             for (JsonObject obj : posts) {
-                Date createAt = sdf.parse(obj.get("createAt").getAsString());
+                Date createAt = CS_DateFormatter.FULL_FORMAT.parse(obj.get("createAt").getAsString());
                 if (createAt.before(syncTime) || createAt.equals(syncTime))
                     posts_copy.remove(obj);
             }
@@ -202,12 +201,12 @@ public class UserSyncController {
         try {
             if (independentUserSyncData != null)
                 if (postType == POST_TYPE.TWITTER && independentUserSyncData.has("twitterId"))
-                    latestDateTime = sdf.parse(independentUserSyncData.get("twitterSyncTime").getAsString());
+                    latestDateTime = CS_DateFormatter.FULL_FORMAT.parse(independentUserSyncData.get("twitterSyncTime").getAsString());
                 else if (postType == POST_TYPE.FACEBOOK && independentUserSyncData.has("facebookId"))
-                    latestDateTime = sdf.parse(independentUserSyncData.get("facebookSyncTime").getAsString());
+                    latestDateTime = CS_DateFormatter.FULL_FORMAT.parse(independentUserSyncData.get("facebookSyncTime").getAsString());
 
             for (JsonObject t : posts) {
-                Date dateTime = sdf.parse(t.get("createAt").getAsString());
+                Date dateTime = CS_DateFormatter.FULL_FORMAT.parse(t.get("createAt").getAsString());
                 if (latestDateTime == null || dateTime.after(latestDateTime))
                     latestDateTime = dateTime;
             }
@@ -219,13 +218,13 @@ public class UserSyncController {
     }
 
     private boolean isSameSyncTime(POST_TYPE postType, ArrayList<JsonObject> posts, JsonObject independentUserSyncData) throws ParseException {
-        Date current_SynTime = sdf.parse(getLatestDateTime(postType, posts));
+        Date current_SynTime = CS_DateFormatter.FULL_FORMAT.parse(getLatestDateTime(postType, posts));
 
         Date syncData_SynTime = null;
         if (postType == POST_TYPE.TWITTER && independentUserSyncData.has("twitterId"))
-            syncData_SynTime = sdf.parse(independentUserSyncData.get("twitterSyncTime").getAsString());
+            syncData_SynTime = CS_DateFormatter.FULL_FORMAT.parse(independentUserSyncData.get("twitterSyncTime").getAsString());
         else if (postType == POST_TYPE.FACEBOOK && independentUserSyncData.has("facebookId"))
-            syncData_SynTime = sdf.parse(independentUserSyncData.get("facebookSyncTime").getAsString());
+            syncData_SynTime = CS_DateFormatter.FULL_FORMAT.parse(independentUserSyncData.get("facebookSyncTime").getAsString());
 
         if (syncData_SynTime == null)
             return false;
@@ -260,13 +259,11 @@ public class UserSyncController {
             result = extractIndependentUserSyncData(userSyncData);
             if (result.has("twitterSyncTime")) {
                 String twitterSyncTime = result.get("twitterSyncTime").getAsString();
-                result.remove("twitterSyncTime");
-                result.addProperty("twitterSyncTime", sdf_display.format(sdf.parse(twitterSyncTime)));
+                result.addProperty("twitterSyncTime", CS_DateFormatter.toDiplayDateFormat(twitterSyncTime));
             }
             if (result.has("facebookSyncTime")) {
                 String facebookSyncTime = result.get("facebookSyncTime").getAsString();
-                result.remove("facebookSyncTime");
-                result.addProperty("facebookSyncTime", sdf_display.format(sdf.parse(facebookSyncTime)));
+                result.addProperty("facebookSyncTime", CS_DateFormatter.toDiplayDateFormat(facebookSyncTime));
             }
 
             result.addProperty("syncDataIsExisted", true);

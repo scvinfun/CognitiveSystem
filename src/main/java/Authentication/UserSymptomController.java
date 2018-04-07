@@ -1,10 +1,12 @@
 package Authentication;
 
+import Common.CS_DateFormatter;
 import Database.FireBaseDB;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +14,8 @@ import java.util.Set;
 
 public class UserSymptomController {
     private static UserSymptomController instance = null;
-    private String path = null;
+    private String path_userSymptom = null;
+    private String path_symptoms = null;
 
     public static UserSymptomController getInstance() {
         if (instance == null) {
@@ -22,7 +25,24 @@ public class UserSymptomController {
     }
 
     private UserSymptomController() {
-        path = "RuleDetection";
+        path_userSymptom = "RuleDetection";
+        path_symptoms = "DiagnosticRule";
+    }
+
+    public String getSymptomCount() {
+        HashMap<String, Integer> disorders = new HashMap<>();
+
+        JsonObject symptoms_json = FireBaseDB.getInstance().getData(path_symptoms);
+        Set<Map.Entry<String, JsonElement>> entrySet = symptoms_json.entrySet();
+        for (Map.Entry<String, JsonElement> entry : entrySet) {
+            String key = entry.getKey().split("_")[1];
+            if (!disorders.containsKey(key))
+                disorders.put(key, 1);
+            else
+                disorders.put(key, disorders.get(key) + 1);
+        }
+
+        return new Gson().toJson(disorders);
     }
 
     public boolean hasDetectedRecord(String uid) {
@@ -41,7 +61,7 @@ public class UserSymptomController {
         }
     }
 
-    public String getUserSymptomData(String uid) {
+    public String getUserSymptomData(String uid) throws ParseException {
         ArrayList<JsonObject> userSymptoms = new ArrayList<>();
         JsonObject ruleDetection = getAllUserSymptomData();
 
@@ -49,8 +69,13 @@ public class UserSymptomController {
         Set<Map.Entry<String, JsonElement>> entrySet = ruleDetection.entrySet();
         for (Map.Entry<String, JsonElement> entry : entrySet) {
             JsonObject obj = entry.getValue().getAsJsonObject();
-            if (obj.get("uid").getAsString().equals(uid))
+            if (obj.get("uid").getAsString().equals(uid)) {
+                String createAt_str = obj.get("createAt").getAsString();
+                String postCreateAt_str = obj.get("postCreateAt").getAsString();
+                obj.addProperty("createAt", CS_DateFormatter.toDiplayDateFormat(createAt_str));
+                obj.addProperty("postCreateAt", CS_DateFormatter.toDiplayDateFormat(postCreateAt_str));
                 userSymptoms.add(obj);
+            }
         }
 
         // get symptom names
@@ -79,6 +104,6 @@ public class UserSymptomController {
     }
 
     private JsonObject getAllUserSymptomData() {
-        return FireBaseDB.getInstance().getData(path);
+        return FireBaseDB.getInstance().getData(path_userSymptom);
     }
 }
