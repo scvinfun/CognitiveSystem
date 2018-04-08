@@ -17,6 +17,7 @@ import edu.stanford.nlp.pipeline.CoreQuote;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.simple.Document;
 import edu.stanford.nlp.simple.Sentence;
+import edu.stanford.nlp.trees.Tree;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -115,11 +116,11 @@ public class DiagnosisController {
             for (DetectionRecord record : records_copy) {
                 if (DataInitiationController.isInit_active()) {
                     // local function
-                    if (!isSelfSubject(record) || isQuotationSentence(record))
+                    if (!isSelfSubject(record) || isQuotationSentence(record) || isFutureTense(record))
                         records.remove(record);
                 } else {
                     // external function
-                    if (stanfordcorenlpService_call(record))
+                    if (stanfordcorenlpService_call(record) || isFutureTense(record))
                         records.remove(record);
                 }
             }
@@ -231,6 +232,28 @@ public class DiagnosisController {
         return false;
     }
 
+    public boolean isFutureTense(DetectionRecord record) {
+        ArrayList detectedWords = new ArrayList();
+        ArrayList<Tree> keyPhrases = new ArrayList<>();
+        Document doc = new Document(record.getOrigin_text());
+        for (Sentence sentence : doc.sentences()) {
+            Tree tree = sentence.parse();
+            TextAnalyticsController.getInstance().getAllLeaf(keyPhrases, tree);
+        }
+
+        if (keyPhrases.size() > 0) {
+            for (Tree t : keyPhrases) {
+                if (t.toString().contains("MD") && (t.getChild(0).toString().equalsIgnoreCase("will") || t.getChild(0).toString().equalsIgnoreCase("shall")))
+                    detectedWords.add(t.getChild(0).toString());
+            }
+        }
+
+        if (detectedWords.size() > 0)
+            return true;
+        else
+            return false;
+    }
+
     private boolean stanfordcorenlpService_call(DetectionRecord record) {
         try {
             URL url = new URL(externalServiceUrl + externalServiceFunction + "?text=" + URLEncoder.encode(record.getOrigin_text(), "UTF-8") + "&keyPhrase=" + URLEncoder.encode(record.getKeyPhrase(), "UTF-8"));
@@ -249,7 +272,7 @@ public class DiagnosisController {
 
         }
 
-        return false;
+        return true;
     }
 
     private double findSemanticSimilarity(String word1, String word2) {

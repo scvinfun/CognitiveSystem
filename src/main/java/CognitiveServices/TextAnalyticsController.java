@@ -202,19 +202,19 @@ public class TextAnalyticsController {
         for (Sentence sentence : doc.sentences()) {
             Tree tree = sentence.parse();
             getAllLeaf(keyPhrases, tree);
+        }
 
-            if (keyPhrases.size() > 0) {
-                for (Tree t : keyPhrases) {
-                    if (t.toString().contains("JJ") || t.toString().contains("JJR") || t.toString().contains("JJS"))
-                        result.add(t.getChild(0).toString());
-                }
+        if (keyPhrases.size() > 0) {
+            for (Tree t : keyPhrases) {
+                if (t.toString().contains("JJ") || t.toString().contains("JJR") || t.toString().contains("JJS"))
+                    result.add(t.getChild(0).toString());
             }
         }
 
         return result;
     }
 
-    private void getAllLeaf(ArrayList<Tree> container, Tree tree) {
+    public void getAllLeaf(ArrayList<Tree> container, Tree tree) {
         if (tree.depth() == 1) {
             container.add(tree);
             return;
