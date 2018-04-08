@@ -28,7 +28,6 @@ import java.util.Set;
 public class WebAppInterface {
     @RequestMapping("di")
     public void di() throws Exception {
-        AuthenticationController.getInstance().loginWithEmailPassword("sukm2004@gmail.com", "sukm2004");
         DiagnosisController.getInstance().diagnose(UserSyncController.POST_TYPE.TWITTER, null);
     }
 
@@ -165,5 +164,17 @@ public class WebAppInterface {
             }
         }
         return new Gson().toJson(response);
+    }
+
+    @PostMapping("deleteSyncData")
+    public void deleteSyncData(@RequestParam("syncType") String syncType) {
+        AuthenticationController authController = AuthenticationController.getInstance();
+        if (!authController.isLogin())
+            return;
+
+        if (syncType.equalsIgnoreCase("twitter"))
+            UserSyncController.getInstance().deleteUserSyncData(UserSyncController.POST_TYPE.TWITTER);
+        else if (syncType.equalsIgnoreCase("facebook"))
+            UserSyncController.getInstance().deleteUserSyncData(UserSyncController.POST_TYPE.FACEBOOK);
     }
 }

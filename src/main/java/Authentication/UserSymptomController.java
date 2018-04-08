@@ -103,6 +103,31 @@ public class UserSymptomController {
         return new Gson().toJson(result);
     }
 
+    public void deleteUserSymptomData(String uid, UserSyncController.POST_TYPE type) {
+        String postType = "";
+        if (type == UserSyncController.POST_TYPE.TWITTER)
+            postType = "TWITTER";
+        else if (type == UserSyncController.POST_TYPE.FACEBOOK)
+            postType = "FACEBOOK";
+
+        ArrayList<JsonObject> userSymptoms = new ArrayList<>();
+        JsonObject ruleDetection = getAllUserSymptomData();
+
+        // get user symptom
+        Set<Map.Entry<String, JsonElement>> entrySet = ruleDetection.entrySet();
+        for (Map.Entry<String, JsonElement> entry : entrySet) {
+            JsonObject obj = entry.getValue().getAsJsonObject();
+            if (obj.get("uid").getAsString().equals(uid) && obj.get("from").getAsString().equals(postType)) {
+                obj.addProperty("key", entry.getKey());
+                userSymptoms.add(obj);
+            }
+        }
+
+        // delete records
+        for (JsonObject obj : userSymptoms)
+            FireBaseDB.getInstance().deleteData(path_userSymptom + "/" + obj.get("key").getAsString());
+    }
+
     private JsonObject getAllUserSymptomData() {
         return FireBaseDB.getInstance().getData(path_userSymptom);
     }

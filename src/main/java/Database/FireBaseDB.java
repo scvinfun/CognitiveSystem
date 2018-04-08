@@ -4,8 +4,10 @@ import Authentication.AuthenticationController;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.json.JSONArray;
@@ -134,6 +136,44 @@ public class FireBaseDB {
             StringEntity params = new StringEntity(data.toString());
             request.addHeader("content-type", "application/x-www-form-urlencoded");
             request.setEntity(params);
+            httpClient.execute(request);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public void modifyEntireData(String path, JsonObject data) {
+        AuthenticationController authController = AuthenticationController.getInstance();
+        if (!authController.isLogin())
+            return;
+
+        // checking whether the data exist or not
+        JsonObject currentData = getData(path);
+        if (currentData == null)
+            return;
+
+        // update data
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        try {
+            HttpPut request = new HttpPut(BASE_URL + path + ".json");
+            StringEntity params = new StringEntity(data.toString());
+            request.addHeader("content-type", "application/x-www-form-urlencoded");
+            request.setEntity(params);
+            httpClient.execute(request);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public void deleteData(String path) {
+        AuthenticationController authController = AuthenticationController.getInstance();
+        if (!authController.isLogin())
+            return;
+
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        try {
+            HttpDelete request = new HttpDelete(BASE_URL + path + ".json?auth=" + authController.getIdToken());
+            request.addHeader("content-type", "application/x-www-form-urlencoded");
             httpClient.execute(request);
         } catch (Exception e) {
             System.out.println(e.getMessage());

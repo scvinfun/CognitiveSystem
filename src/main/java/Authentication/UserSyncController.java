@@ -271,4 +271,33 @@ public class UserSyncController {
 
         return result;
     }
+
+    public void deleteUserSyncData(POST_TYPE type) {
+        FireBaseDB fireBaseDB = FireBaseDB.getInstance();
+        JsonObject userSyncData = FireBaseDB.getInstance().getData(syncPath);
+        JsonObject independentUserSyncData = extractIndependentUserSyncData(userSyncData);
+        String particularPath = syncPath + "/" + independentUserSyncData.get("key").getAsString();
+        independentUserSyncData.remove("key");
+
+        // delete or modify sync data
+        if (type == POST_TYPE.TWITTER) {
+            if (independentUserSyncData.has("facebookId")) {
+                independentUserSyncData.remove("twitterId");
+                independentUserSyncData.remove("twitterSyncTime");
+                fireBaseDB.modifyEntireData(particularPath, independentUserSyncData);
+            } else {
+                fireBaseDB.deleteData(particularPath);
+            }
+        } else if (type == POST_TYPE.FACEBOOK) {
+            if (independentUserSyncData.has("twitterId")) {
+                independentUserSyncData.remove("facebookId");
+                independentUserSyncData.remove("facebookSyncTime");
+                fireBaseDB.modifyEntireData(particularPath, independentUserSyncData);
+            } else {
+                fireBaseDB.deleteData(particularPath);
+            }
+        }
+
+        UserSymptomController.getInstance().deleteUserSymptomData(independentUserSyncData.get("uid").getAsString(), type);
+    }
 }
