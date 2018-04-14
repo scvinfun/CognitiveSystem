@@ -166,8 +166,8 @@ public class WebAppInterface {
         return new Gson().toJson(response);
     }
 
-    @PostMapping("deleteSyncData")
-    public void deleteSyncData(@RequestParam("syncType") String syncType) {
+    @PostMapping("DeleteSyncData")
+    public void DeleteSyncData(@RequestParam("syncType") String syncType) {
         AuthenticationController authController = AuthenticationController.getInstance();
         if (!authController.isLogin())
             return;
