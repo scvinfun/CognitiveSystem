@@ -6,6 +6,7 @@ import Database.FireBaseDB;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.shing.cognitivesystem.DataInitiationController;
 import edu.cmu.lti.lexical_db.ILexicalDatabase;
 import edu.cmu.lti.lexical_db.NictWordNet;
@@ -62,6 +63,8 @@ public class DiagnosisController {
 //        JsonElement etest5 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am so overwhelmed by co-workers. I took a new job to limit my stress. I used to be a leader and wanted to reduce my stress so I just became a worker bee. Now I feel so pressured. because I can't say anything to co-workers who are not working and not acting like they are part of the team.\"}");
 //        JsonElement etest6 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I am totally uninterested in anything.\"}");
 //        JsonElement etest7 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"feel upset...\"}");
+//        JsonElement etest8 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I have a migraine.\"}");
+//        JsonElement etest9 = new JsonParser().parse("{\"createAt\":\"Wed Jan 10 22:42:00 CST 2018\",\"text\":\"I don't have a migraine.\"}");
 //        posts.add(etestn.getAsJsonObject());
 //        posts.add(etest0.getAsJsonObject());
 //        posts.add(etest.getAsJsonObject());
@@ -71,6 +74,8 @@ public class DiagnosisController {
 //        posts.add(etest5.getAsJsonObject());
 //        posts.add(etest6.getAsJsonObject());
 //        posts.add(etest7.getAsJsonObject());
+//        posts.add(etest8.getAsJsonObject());
+//        posts.add(etest9.getAsJsonObject());
 
         ArrayList<DetectionRecord> records = new ArrayList<>();
         // handle each post
@@ -116,11 +121,11 @@ public class DiagnosisController {
             for (DetectionRecord record : records_copy) {
                 if (DataInitiationController.isInit_active()) {
                     // local function
-                    if (!isSelfSubject(record) || isQuotationSentence(record) || isFutureTense(record))
+                    if (!isSelfSubject(record) || isQuotationSentence(record) || isFutureTense(record) || isNegation(record))
                         records.remove(record);
                 } else {
                     // external function
-                    if (stanfordcorenlpService_call(record) || isFutureTense(record))
+                    if (stanfordcorenlpService_call(record) || isFutureTense(record) || isNegation(record))
                         records.remove(record);
                 }
             }
@@ -252,6 +257,56 @@ public class DiagnosisController {
             return true;
         else
             return false;
+    }
+
+    public boolean isNegation(DetectionRecord record) {
+        boolean result = false;
+
+        ArrayList<Dependency> dependencies = new ArrayList<>();
+        Document doc = new Document(record.getOrigin_text());
+        for (Sentence sentence : doc.sentences()) {
+            if (!sentence.toString().contains(record.getKeyPhrase()))
+                continue;
+
+            List<Optional<Integer>> dependency_index_list = sentence.governors();
+            List<Optional<String>> dependency_label_list = sentence.incomingDependencyLabels();
+            for (int i = 0; i < dependency_index_list.size(); i++) {
+                Optional<Integer> dependency_index = dependency_index_list.get(i);
+                Optional<String> dependency_label = dependency_label_list.get(i);
+                if (dependency_index.get() != -1)
+                    dependencies.add(new Dependency(dependency_label.get(), sentence.word(i), sentence.word(dependency_index.get())));
+            }
+            break;
+        }
+
+        if (dependencies.size() > 0) {
+            Dependency neg_dependency = null;
+            Dependency linker_dependency = null;
+            for (Dependency d : dependencies) {
+                if (d.getLabel().equals("neg")) {
+                    neg_dependency = d;
+                    break;
+                }
+            }
+
+            if (neg_dependency == null)
+                return false;
+
+            for (Dependency d : dependencies) {
+                if (d.getTarget().equals(record.getKeyPhrase())) {
+                    linker_dependency = d;
+                    break;
+                }
+            }
+
+            if (linker_dependency == null)
+                return false;
+
+            if (neg_dependency.getPointer().equals(linker_dependency.getPointer()))
+                result = true;
+        }
+
+        return result;
     }
 
     private boolean stanfordcorenlpService_call(DetectionRecord record) {
