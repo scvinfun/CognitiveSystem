@@ -6,7 +6,6 @@ import Database.FireBaseDB;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.shing.cognitivesystem.DataInitiationController;
 import edu.cmu.lti.lexical_db.ILexicalDatabase;
 import edu.cmu.lti.lexical_db.NictWordNet;
@@ -340,5 +339,11 @@ public class DiagnosisController {
         DetectionRecord dummy = DetectionRecord.getDummyDetectRecord();
         isSelfSubject(dummy);
         isQuotationSentence(dummy);
+    }
+
+    public void initSimpleStanfordCoreNLPService() {
+        DetectionRecord fakeRecord = DetectionRecord.getDummyDetectRecord();
+        isNegation(fakeRecord);
+        isFutureTense(fakeRecord);
     }
 }
